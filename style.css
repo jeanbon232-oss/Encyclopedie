@@ -295,3 +295,33 @@ html, body { min-height: 100%; }
   }
 }
 
+
+/* 0) Évite la bande noire : même fond sur <html> + stop débordements */
+html { background: #f4efe4; }
+html, body { overflow-x: hidden; }
+
+/* 1) Fond parchemin fiable (desktop OK) */
+body {
+  background: #f4efe4 url("img/parchment.jpg") center/cover no-repeat fixed;
+}
+
+/* 2) Mobile : pas de 'fixed' et pas de largeur mini qui casse la mise en page */
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;     /* corrige le fond qui “flotte” */
+    background-position: center top;
+    min-height: 100svh;                /* viewport stable mobile */
+  }
+
+  /* La grille doit pouvoir passer en 1 colonne sans débordement */
+  :root { --card-min: 0px; }           /* annule la contrainte 480px */
+  .grid { grid-template-columns: 1fr; }
+
+  /* Sécurité : aucune carte ne dépasse */
+  .card { max-width: 100%; }
+}
+
+/* 3) Très petits écrans : au cas où */
+@media (max-width: 360px) {
+  .controls { gap: .6rem; }
+}
