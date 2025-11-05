@@ -275,3 +275,23 @@ body.home {
 .btn-back:hover {
   background: #a25c2e;
 }
+
+/* Assure une hauteur mini de viewport */
+html, body { min-height: 100%; }
+
+/* Mobile/tablette : pas de background fixed, sinon il "flotte" */
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;     /* au lieu de fixed */
+    background-size: cover;            /* garde le plein écran */
+    background-position: center top;   /* évite les bandes en haut/bas */
+    min-height: 100svh;                /* viewport stable sur mobile */
+  }
+  body.home {
+    min-height: 100svh;                /* idem pour la page d’accueil */
+    background-attachment: scroll;
+    background-size: cover;
+    background-position: center top;
+  }
+}
+
