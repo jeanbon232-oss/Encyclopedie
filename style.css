@@ -1,0 +1,277 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --text: #e7e9ee;
+  --muted: #a7acb8;
+  --accent: #8ccf4d;
+  --border: #262b36;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+
+.container { width: min(1100px, 92vw); margin: 0 auto; }
+
+header { padding: 24px 0 8px; }
+h1 { margin: 0 0 12px; font-size: 28px; }
+
+.controls { display: flex; gap: 12px; }
+.controls input, .controls select {
+  background: var(--panel); border: 1px solid var(--border); color: var(--text);
+  padding: 10px 12px; border-radius: 10px; outline: none; width: 100%;
+}
+.controls select { width: 260px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; padding: 18px 0 40px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.25);
+}
+.card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card h2 { margin: 0; font-size: 18px; }
+.card .beer-rating { color: var(--accent); font-weight: 700; }
+.card .beer-style { margin: 6px 0; color: var(--muted); font-size: 14px; }
+.card .beer-notes { margin: 8px 0 10px; }
+.card .meta { display: flex; gap: 10px; color: var(--muted); font-size: 12px; }
+
+
+
+
+
+
+
+
+
+/* Fond global parchemin + léger grain */
+body {
+  background: #f4efe4 url("img/parchment.jpg") center/cover fixed no-repeat;
+  color: #2b2b2b; /* texte plus foncé pour lisibilité */
+}
+
+/* Éclaircir les cartes (tu peux garder/retirer la texture interne si tu veux) */
+.card {
+  background: rgba(255, 252, 244, 0.88); /* voile clair */
+  border-color: #d6c9a9;
+  box-shadow: 0 6px 14px rgba(120, 90, 30, .15);
+}
+header h1 {
+  display: none;
+}
+
+
+
+
+/* ---- PAGE D'ACCUEIL ---- */
+body.home {
+  background: #f4efe4 url("img/parchment.jpg") center/cover no-repeat;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #3b2f1a;
+  font-family: "Georgia", "Garamond", serif;
+}
+
+.home-card {
+  background: rgba(255, 252, 244, 0.9);
+  border: 2px solid #d3c6a1;
+  border-radius: 16px;
+  padding: 2rem 3rem;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+  max-width: 600px;
+}
+
+.home-card h1 {
+  font-size: 2rem;
+  margin-bottom: 0.4em;
+  line-height: 1.2;
+}
+
+.home-card h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0.5em 0 1em;
+  color: #5a4a2f;
+}
+
+.home-card .subtitle {
+  font-style: italic;
+  font-size: 1rem;
+  line-height: 1.4;
+  margin-bottom: 1.5em;
+}
+
+.home-card .places {
+  font-size: 0.95rem;
+  color: #4b3c23;
+  margin-bottom: 2em;
+}
+
+.btn {
+  display: inline-block;
+  background: #8b4513;
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.25s ease;
+}
+.btn:hover {
+  background: #a25c2e;
+}
+
+/* Feuille papier avec cadre "bords abîmés" calibré */
+.card.deckled {
+  position: relative;
+  background: #fffdf6 url("img/paper.webp") center/cover no-repeat;
+  color: #2b2416;
+  padding: 24px 28px;
+  border-radius: 6px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+/* le cadre PNG superposé */
+.card.deckled::before {
+  content: "";
+  position: absolute;
+  inset: 0;                /* couvre toute la carte */
+  background: url("img/deckle.png") center/149% 102% no-repeat;
+  /* ↑ 100% largeur, 100% hauteur (base) */
+
+  opacity: 0.8;            /* ajuste la transparence */
+  pointer-events: none;    /* pas cliquable */
+  z-index: 2;
+}
+
+/* largeur mini d'une carte : ajuste ici pour contrôler le nb de colonnes */
+:root { --card-min: 480px; }            /* 480 ≈ 2 colonnes sur écran “classique” */
+
+.grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-min), 1fr));
+}
+
+/* Lisibilité du texte */
+.card { line-height: 1.5; }
+.card .beer-notes { max-width: 62ch; }  /* évite les lignes trop longues */
+
+.btn {
+  background: #8b4513; color:#fff; border:0; border-radius:10px;
+  padding:.55rem .9rem; font-weight:600; cursor:pointer;
+}
+.btn:hover { background:#a25c2e; }
+
+/* surbrillance quand on tire au hasard */
+.card.flash {
+  position: relative;
+  animation: flashPick 1.6s ease;
+  outline: 4px solid rgba(255, 230, 0, 0.95);
+  outline-offset: 4px;
+  transform: scale(1.04);
+  transition: transform 0.4s ease;
+  z-index: 10;
+}
+
+@keyframes flashPick {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 235, 59, 0);
+    filter: brightness(1);
+  }
+  10% {
+    box-shadow: 0 0 40px 10px rgba(255, 235, 59, 0.9);
+    filter: brightness(1.4);
+  }
+  40% {
+    box-shadow: 0 0 60px 20px rgba(255, 255, 150, 0.7);
+    filter: brightness(1.2);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 235, 59, 0);
+    filter: brightness(1);
+    transform: scale(1);
+  }
+}
+
+.btn-back {
+  background: #7a3e10;
+  margin-right: 1rem;
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #fff;
+  transition: background 0.25s ease;
+}
+
+.btn-back:hover {
+  background: #a25c2e;
+}
+
+/* Disposition générale du header */
+.header-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem; /* espace vertical entre les blocs */
+  padding: 1.5rem 0 0.5rem;
+}
+
+/* Ligne du haut : retour + titre */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.top-bar h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: #3b2f1a;
+  font-family: "Georgia", serif;
+}
+
+/* Ligne du bas : recherche, tri, bouton hasard */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.controls input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.controls select {
+  width: 220px;
+}
+
+#randomBtn {
+  flex-shrink: 0;
+  background: #8b4513;
+}
+
+/* Style du bouton retour */
+.btn-back {
+  background: #7a3e10;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.25s ease;
+}
+
+.btn-back:hover {
+  background: #a25c2e;
+}

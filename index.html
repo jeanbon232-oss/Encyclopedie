@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mon carnet de bières</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="container header-layout">
+  <div class="top-bar">
+    <a href="accueil.html" class="btn btn-back">← Retour à l’accueil</a>
+    <h1>Mon carnet de bières</h1>
+  </div>
+
+  <div class="controls">
+    <input id="search" type="search" placeholder="Rechercher (nom, style, notes)..." />
+    <select id="sort">
+      <option value="name-asc">Nom (A→Z)</option>
+      <option value="name-desc">Nom (Z→A)</option>
+      <option value="rating-desc">Note (haut→bas)</option>
+      <option value="rating-asc">Note (bas→haut)</option>
+      <option value="year-desc">Année (récent→ancien)</option>
+      <option value="year-asc">Année (ancien→récent)</option>
+    </select>
+    <button id="randomBtn" class="btn">Au hasard 🎲</button>
+  </div>
+  </header>
+
+  <main id="list" class="grid container" aria-live="polite"></main>
+
+  <template id="beer-card">
+  <article class="card deckled">
+    <div class="card-head">
+      <h2 class="beer-name"></h2>
+      <span class="beer-rating"></span>
+    </div>
+    <p class="beer-style"></p>
+    <p class="beer-notes"></p>
+    <div class="meta">
+      <span class="beer-year"></span>
+      <span class="beer-source"></span>
+    </div>
+  </article>
+  </template>
+
+  <script defer src="app.js"></script>
+</body>
+</html>
