@@ -325,3 +325,38 @@ body {
 @media (max-width: 360px) {
   .controls { gap: .6rem; }
 }
+
+/* Empêche TOUT débordement horizontal et unifie le fond  */
+html { background: #f4efe4; }
+html, body { overflow-x: hidden; }
+
+/* Images/medias jamais plus larges que l’écran */
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+/* Mobile : corrige le fond + empêche les cartes larges */
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;   /* évite le bug du "fixed" */
+    background-position: center top;
+    min-height: 100svh;
+  }
+
+  /* La grille en 1 colonne sans largeur minimale */
+  :root { --card-min: 0px; }
+  .grid { grid-template-columns: 1fr; }
+
+  /* Sécurité : aucune carte ne dépasse l’écran */
+  .card { max-width: 100%; }
+
+  /* Le flash (scale + outline) peut créer un overflow -> on le désactive sur mobile */
+  .card.flash { 
+    animation: none !important;
+    transform: none !important;
+    outline: none !important;
+  }
+
+  /* Les contrôles acceptent de rétrécir, sinon ils poussent la page */
+  .controls { min-width: 0; }
+  .controls input, .controls select, #randomBtn { min-width: 0; }
+  .controls select { flex: 0 1 220px; width: auto; }
+}
