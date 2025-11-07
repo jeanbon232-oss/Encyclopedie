@@ -33,11 +33,6 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
       const vb = b.name.toLowerCase();
       return va > vb ? +1 * mul : va < vb ? -1 * mul : 0;
     }
-    if (key === 'year') {
-      const va = a.year ?? -Infinity;
-      const vb = b.year ?? -Infinity;
-      return va > vb ? +1 * mul : va < vb ? -1 * mul : 0;
-    }
     if (key === 'rating') {
       const va = toNumRating(a.rating);
       const vb = toNumRating(b.rating);
@@ -146,3 +141,4 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
   // Premier rendu
   refresh();
 })();
+
