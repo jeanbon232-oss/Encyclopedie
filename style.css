@@ -405,3 +405,52 @@ body.privacy {
     min-height: 100svh;
   }
 }
+
+/* Empêche l'empilement horizontal sur la home */
+body.home {
+  display: flex;
+  flex-direction: column;   /* <-- clé : colonne, plus "row" */
+  min-height: 100vh;
+}
+
+/* Centre la carte au milieu et pousse le footer en bas */
+.home-container {
+  flex: 1;                           /* prend la hauteur restante */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Footer bien centré, en bas */
+.footer {
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  padding: 1.5rem 0;
+  width: 100%;
+  margin-top: 0;                     /* plus besoin d’un gros margin-top */
+}
+
+.footer a {
+  color: inherit;
+  text-decoration: none;
+}
+.footer a:hover { text-decoration: underline; opacity: .8; }
+
+/* Base sûre pour la hauteur */
+html, body { min-height: 100%; background-color: #f4efe4; }
+
+/* Fond dédié à la page confidentialité */
+body.privacy {
+  background: #f4efe4 url("img/parchment.jpg") center/cover no-repeat fixed;
+  min-height: 100vh;    /* couvre toute la hauteur même si contenu court */
+  color: #2b1b12;
+}
+
+/* Mobile : éviter les glitchs de background fixed */
+@media (max-width: 768px) {
+  body.privacy {
+    background-attachment: scroll;
+    min-height: 100svh; /* viewport stable sur mobile */
+  }
+}
