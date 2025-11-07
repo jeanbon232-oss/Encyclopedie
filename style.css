@@ -390,3 +390,18 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
   text-decoration: underline;
   opacity: 0.8;
 }
+
+/* --- Fond parchemin pour la page de confidentialité --- */
+body.privacy {
+  background: #f4efe4 url("img/parchment.jpg") center/cover no-repeat fixed;
+  min-height: 100vh;       /* assure que le fond couvre toute la hauteur */
+  color: #2b1b12;          /* couleur de texte adaptée */
+}
+
+/* Option mobile (corrige les bugs iPhone/Android sur le fond "fixed") */
+@media (max-width: 768px) {
+  body.privacy {
+    background-attachment: scroll;
+    min-height: 100svh;
+  }
+}
