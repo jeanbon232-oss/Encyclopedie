@@ -8,46 +8,71 @@
      crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
   <header class="container header-layout">
-  <div class="top-bar">
-    <a href="accueil.html" class="btn btn-back">← Retour à l’accueil</a>
-    <h1>Encyclopédie de la bière</h1>
-  </div>
+    <div class="top-bar">
+      <a href="accueil.html" class="btn btn-back">← Retour à l’accueil</a>
+      <h1>Encyclopédie de la bière</h1>
+    </div>
 
-  <div class="controls">
-    <input id="search" type="search" placeholder="Rechercher (nom, style, notes)..." />
-    <select id="sort">
-      <option value="name-asc">Nom (A→Z)</option>
-      <option value="name-desc">Nom (Z→A)</option>
-      <option value="rating-desc">Note (haut→bas)</option>
-      <option value="rating-asc">Note (bas→haut)</option>
-    </select>
-    <button id="randomBtn" class="btn">Au hasard 🎲</button>
-  </div>
+    <div class="controls">
+      <input id="search" type="search" placeholder="Rechercher (nom, style, notes)..." />
+      <select id="sort">
+        <option value="name-asc">Nom (A→Z)</option>
+        <option value="name-desc">Nom (Z→A)</option>
+        <option value="rating-desc">Note (haut→bas)</option>
+        <option value="rating-asc">Note (bas→haut)</option>
+      </select>
+      <button id="randomBtn" class="btn">Au hasard 🎲</button>
+    </div>
   </header>
 
   <main id="list" class="grid container" aria-live="polite"></main>
 
   <template id="beer-card">
-  <article class="card deckled">
-    <div class="card-head">
-      <h2 class="beer-name"></h2>
-      <span class="beer-rating"></span>
-    </div>
-    <p class="beer-style"></p>
-    <p class="beer-notes"></p>
-    <div class="meta">
-      <span class="beer-year"></span>
-      <span class="beer-source"></span>
-    </div>
-  </article>
+    <article class="card deckled">
+      <div class="card-head">
+        <h2 class="beer-name"></h2>
+        <span class="beer-rating"></span>
+      </div>
+      <p class="beer-style"></p>
+      <p class="beer-notes"></p>
+      <div class="meta">
+        <span class="beer-year"></span>
+        <span class="beer-source"></span>
+      </div>
+    </article>
   </template>
+
+  <!-- === Modal fiche bière === -->
+  <div id="beer-modal" class="modal" hidden>
+    <div class="modal__backdrop"></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="beer-title">
+      <button class="modal__close" aria-label="Fermer">×</button>
+      <div class="modal__content">
+        <div class="modal__media">
+          <img id="beer-img" alt="" loading="lazy">
+        </div>
+        <div class="modal__info">
+          <h2 id="beer-title"></h2>
+          <p class="beer-style" id="beer-style"></p>
+          <p class="beer-rating" id="beer-rating"></p>
+          <p class="beer-notes" id="beer-notes"></p>
+          <div class="modal__actions">
+            <a id="beer-link" class="btn" target="_blank" rel="noopener">Ouvrir le lien</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- === fin modal === -->
 
   <script defer src="app.js"></script>
 </body>
-
 </html>
+
+
 
 
 
