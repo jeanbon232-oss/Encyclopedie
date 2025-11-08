@@ -60,6 +60,11 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
     // Champs
     node.querySelector('.beer-name').textContent = b.name;
 
+    // 👇 ajoute ces 3 lignes ici
+    const nameEl = node.querySelector('.beer-name');
+    nameEl.style.cursor = "pointer";
+    nameEl.addEventListener("click", () => openBeerModal(b));
+
     const ratingEl = node.querySelector('.beer-rating');
     ratingEl.textContent = b.rating != null ? `${b.rating}/20` : '—';
 
@@ -141,4 +146,69 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
   // Premier rendu
   refresh();
 })();
+
+/* === Fonctions pour la fiche bière (modal) === */
+
+// transforme "Duvel Tripel Hop" -> "duvel-tripel-hop"
+function slugify(name) {
+  return name
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // supprime accents
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+// URL de l'image (si absente => placeholder)
+function getBeerImageUrl(beerName) {
+  const slug = slugify(beerName);
+  return `img/beers/${slug}.jpg`;      // adapte si tes images sont ailleurs
+}
+function getFallbackImageUrl() {
+  return `img/beers/_placeholder.png`;
+}
+
+// lien externe : si beer.source existe -> l’utilise, sinon une recherche Google
+function getBeerLink(beer) {
+  const name = beer.name || "";
+  if (beer.source && /^https?:\/\//i.test(beer.source)) return beer.source;
+  const q = encodeURIComponent(`${name} bière`);
+  return `https://www.google.com/search?q=${q}`;
+}
+
+// ouvre la modale et peuple le contenu
+function openBeerModal(beer) {
+  const modal = document.getElementById("beer-modal");
+  const imgEl = document.getElementById("beer-img");
+  const tEl = document.getElementById("beer-title");
+  const sEl = document.getElementById("beer-style");
+  const rEl = document.getElementById("beer-rating");
+  const nEl = document.getElementById("beer-notes");
+  const lEl = document.getElementById("beer-link");
+
+  const name = beer.name || "Bière";
+  tEl.textContent = name;
+  sEl.textContent = beer.style ? `Style : ${beer.style}` : "";
+  rEl.textContent = beer.rating ? `Note : ${beer.rating}/20` : "";
+  nEl.textContent = beer.notes || "";
+
+  imgEl.src = getBeerImageUrl(name);
+  imgEl.alt = `Bouteille — ${name}`;
+  imgEl.onerror = () => { imgEl.src = getFallbackImageUrl(); };
+
+  lEl.href = getBeerLink(beer);
+
+  modal.hidden = false;
+
+  // fermeture
+  modal.querySelector(".modal__close").onclick = () => modal.hidden = true;
+  modal.querySelector(".modal__backdrop").onclick = () => modal.hidden = true;
+  function onEsc(e) {
+    if (e.key === "Escape") {
+      modal.hidden = true;
+      document.removeEventListener("keydown", onEsc);
+    }
+  }
+  document.addEventListener("keydown", onEsc);
+}
+
 
