@@ -100,24 +100,75 @@ let score = 0;
 let answeredCount = 0;
 
 function maybeShowFinalScore() {
-  if (answeredCount === quizData.length) {
-    const box = document.createElement("div");
-    box.className = "score-box";
-    const note = (score === quizData.length)
-      ? "Parfait ! 🍾"
-      : (score === 0 ? "Zéro pointé… mais avec panache 😅" : "Pas mal !");
-    box.innerHTML = `
-      <h3>Score final : ${score}/${quizData.length}</h3>
-      <p>${note}</p>
-      <button class="btn btn-restart" type="button">Recommencer</button>
-    `;
-    container.appendChild(box);
+  if (answeredCount !== quizData.length) return;
 
-    box.querySelector(".btn-restart").addEventListener("click", () => {
-      location.reload();
-    });
-  }
+  const box = document.createElement("div");
+  box.className = "score-box";
+
+  const pct = Math.round((score / quizData.length) * 100);
+
+  // Paliers (tu peux ajuster les seuils si tu veux)
+  // 100    = parfait
+  // 90–99  = très bon
+  // 75–89  = bon
+  // 60–74  = correct
+  // 40–59  = moyen
+  // 25–39  = pas bon
+  // 1–24   = catastrophique
+  // 0      = nul
+  const TIERS = [
+    { id: "parfait",        min: 100, msgs: [
+      "Tu as probablement triché donc je ne vais pas trop te féliciter",
+      "Impossible d'atteindre ce score du premier coup, et si c'est le cas, je n'ai pas les mots."
+    ]},
+    { id: "tres-bon",       min: 90, msgs: [
+      "Score tellement élevé que ça devient suspect...",
+      "Comment est-ce possible si ce n'est de la chance? Félicitations !"
+    ]},
+    { id: "bon",            min: 75, msgs: [
+      "Très belle lecture du carnet. Chapeau bas de la part des experts.",
+      "Solide prestation, on sent l’expérience.",
+    ]},
+    { id: "correct",        min: 60, msgs: [
+      "On sent que la lecture a été attentive",
+      "Bravo, un tel score traduit une lecture attentive.",
+      "Tu peux monter d’un cran avec un peu plus d'expérience."
+    ]},
+    { id: "moyen",          min: 40, msgs: [
+      "Moyen. Encore un chapitre du carnet ce soir ?",
+      "Bof mais tu as du potentiel… remets-toi à la lecture.",
+      "On a vu pire, on a vu mieux."
+    ]},
+    { id: "pas-bon",        min: 25, msgs: [
+      "Pas bon. Remets-toi de suite à la lecture.",
+      "Aïe… Ce score est presque insultant pour les experts.",
+      "On révise d'abord puis on s'y remet."
+    ]},
+    { id: "nul",            min: 0, msgs: [
+      "Nul. La honte des lecteurs. As-tu seulement ouvert le carnet ?",
+      "Zéro pointé mais merci pour l'effort.",
+      "Tout faux, faut le faire, relis l'entièreté du carnet tout de suite."
+    ]}
+  ];
+
+  // Trouver le bon palier
+  let tier = TIERS.find(t => pct >= t.min);
+  if (!tier) tier = TIERS[TIERS.length - 1];
+
+  // Message aléatoire dans le palier
+  const note = tier.msgs[Math.floor(Math.random() * tier.msgs.length)];
+
+  box.setAttribute("data-tier", tier.id);
+  box.innerHTML = `
+    <h3>Score final : ${score}/${quizData.length} (${pct}%)</h3>
+    <p>${note}</p>
+    <button class="btn btn-restart" type="button">Recommencer</button>
+  `;
+  container.appendChild(box);
+
+  box.querySelector(".btn-restart").addEventListener("click", () => location.reload());
 }
+
 
 // Génération des cartes questions
 quizData.forEach((q, i) => {
@@ -167,3 +218,4 @@ quizData.forEach((q, i) => {
     });
   });
 });
+
