@@ -28,7 +28,7 @@ const quizData = [
   {
     question: "Brugse Zot : Le Page a-t-il dérangé le roy ?",
     options: ["Oui mais il est pardonné", "Non, pas du tout", "Oui, et il sera pendu"],
-    correct: "Non,pas du tout"
+    correct: "Non, pas du tout"
   },
   {
     question: "Combien de temps peut-on espérer en rodéo sur la Bush Noël ?",
@@ -72,7 +72,7 @@ const quizData = [
   },
   {
     question: "Quelle bière propose une nourriture qui ne nécessite pas un processus de cuisson au four ?",
-    options: ["Hertog Jan Bockbier", "Palm", "St Hubrtus Tripel Blond"],
+    options: ["Hertog Jan Bockbier", "Palm", "St Hubertus Tripel Blond"],
     correct: "St Hubertus Tripel Blond"
   }
 ];
@@ -218,4 +218,5 @@ quizData.forEach((q, i) => {
     });
   });
 });
+
 
