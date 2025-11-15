@@ -165,7 +165,7 @@ function getBeerImageUrl(beerName) {
 }
 
 function getFallbackImageUrl() {
-  return `img/beers/placeholder.png`;
+  return `img/beers/placeholder2.png`;
 }
 
 // Nettoie le nom pour la recherche (enlève la date entre parenthèses à la fin)
@@ -224,6 +224,7 @@ function openBeerModal(beer) {
   }
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
