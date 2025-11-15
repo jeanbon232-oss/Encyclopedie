@@ -596,3 +596,12 @@ body.quiz {
   text-decoration-style: dotted;
 }
 
+/* --- Fond parchemin pour la page "bières" (index.html / accueil.html) --- */
+body:not(.home):not(.privacy):not(.quiz) {
+  min-height: 100vh;                 /* le body fait au moins la hauteur de l’écran */
+  background-color: #f4efe4;
+  background-image: url("img/parchment.jpg");
+  background-repeat: repeat-y;       /* se répète verticalement */
+  background-position: center top;
+  background-size: 100% auto;        /* prend toute la largeur */
+}
