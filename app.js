@@ -163,15 +163,29 @@ function getBeerImageUrl(beerName) {
   const slug = slugify(beerName);
   return `img/beers/${slug}.jpg`;      // adapte si tes images sont ailleurs
 }
+
 function getFallbackImageUrl() {
   return `img/beers/placeholder.png`;
 }
 
+// Nettoie le nom pour la recherche (enlève la date entre parenthèses à la fin)
+function cleanBeerNameForSearch(name) {
+  if (!name) return "";
+  // supprime un bloc " (…)" en fin de chaîne UNIQUEMENT s'il contient un chiffre
+  // ex: "Duvel (+4/2018)" -> "Duvel"
+  //     "Orval (St Monon)" -> garde tout
+  return name.replace(/\s*\((?=[^)]*\d)[^)]*\)\s*$/, "").trim();
+}
+
 // lien externe : si beer.source existe -> l’utilise, sinon une recherche Google
 function getBeerLink(beer) {
-  const name = beer.name || "";
+  const rawName = beer.name || "";
+  const cleanName = cleanBeerNameForSearch(rawName);
+  const nameForSearch = cleanName || rawName; // fallback au cas où
+
   if (beer.source && /^https?:\/\//i.test(beer.source)) return beer.source;
-  const q = encodeURIComponent(`${name} bière`);
+
+  const q = encodeURIComponent(`${nameForSearch} bière`);
   return `https://www.google.com/search?q=${q}`;
 }
 
@@ -210,6 +224,7 @@ function openBeerModal(beer) {
   }
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
