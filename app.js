@@ -164,7 +164,7 @@ function getBeerImageUrl(beerName) {
   return `img/beers/${slug}.jpg`;      // adapte si tes images sont ailleurs
 }
 function getFallbackImageUrl() {
-  return `img/beers/_placeholder.png`;
+  return `img/beers/placeholder.png`;
 }
 
 // lien externe : si beer.source existe -> l’utilise, sinon une recherche Google
@@ -210,5 +210,6 @@ function openBeerModal(beer) {
   }
   document.addEventListener("keydown", onEsc);
 }
+
 
 
