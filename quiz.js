@@ -74,6 +74,31 @@ const quizData = [
     question: "Quelle bière propose une nourriture qui ne nécessite pas un processus de cuisson au four ?",
     options: ["Hertog Jan Bockbier", "Palm", "St Hubertus Tripel Blond"],
     correct: "St Hubertus Tripel Blond"
+  },
+  {
+    question: "Quelle bière n’évoque pas de présence infantile ?",
+    options: ["La Tharée Triple", "Maredsous Brune", "Guinness"],
+    correct: "Guinness"
+  },
+  {
+    question: "Laquelle de ces bières propose un amalgame végétal plutôt que métallique ?",
+    options: ["Zinnebier", "Blanche de Wissant", "Grimbergen Prestige"],
+    correct: "Zinnebier"
+  },
+  {
+    question: "Super 8 IPA : Pourquoi le bourgeois n’obtient pas son titre de noblesse ?",
+    options: ["Ses suppliques suscitent le dédain", "Sa naissance ternit sa valeur", "Son projet rebute les conservateurs"],
+    correct: "Son projet rebute les conservateurs"
+  },
+  {
+    question: "Laquelle de ces bières évoque une peinture qui n’a pas pu être réalisée à l’huile ?",
+    options: ["Bronzen Baron", "Saison de Dottignies", "V Cense"],
+    correct: "Saison de Dottignies"
+  },
+  {
+    question: "Strandlover Velskabt Wit : Pourquoi le charpentier trempe-t-il le bois dans une solution chaude ?",
+    options: ["Pour le protéger des parasites", "Pour l’assouplir", "Pour changer sa teinte"],
+    correct: "Pour l’assouplir"
   }
 ];
 
@@ -218,5 +243,6 @@ quizData.forEach((q, i) => {
     });
   });
 });
+
 
 
