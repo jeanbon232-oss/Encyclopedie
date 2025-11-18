@@ -605,3 +605,13 @@ body:not(.home):not(.privacy):not(.quiz) {
   background-position: center top;
   background-size: 100% auto;        /* prend toute la largeur */
 }
+
+.fun-gif {
+  text-align: center;
+  margin: 30px 0;
+}
+
+.fun-gif img {
+  max-width: 200px;
+  height: auto;
+}
