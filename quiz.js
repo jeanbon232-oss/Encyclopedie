@@ -1,4 +1,4 @@
-// --- Données du quiz (tu peux en ajouter) ---
+// --- Données du quiz (pool complet) ---
 const quizData = [
   {
     question: "Quelle est la meilleure Duvel ?",
@@ -124,23 +124,35 @@ const container = document.getElementById("quiz-container");
 let score = 0;
 let answeredCount = 0;
 
+// --- NOUVEAU : tirage aléatoire de 10 questions parmi tout le pool ---
+
+const QUESTIONS_PER_RUN = 10;
+
+// petit shuffle Fisher–Yates
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// on crée une copie mélangée et on en prend 10 (ou moins si le pool est plus petit)
+const selectedQuestions = shuffleArray([...quizData]).slice(0, QUESTIONS_PER_RUN);
+
+// pour le calcul du score / pour savoir quand on a fini :
+const TOTAL_QUESTIONS = selectedQuestions.length;
+
+// ------------------------------------------------------------
+
 function maybeShowFinalScore() {
-  if (answeredCount !== quizData.length) return;
+  if (answeredCount !== TOTAL_QUESTIONS) return;
 
   const box = document.createElement("div");
   box.className = "score-box";
 
-  const pct = Math.round((score / quizData.length) * 100);
+  const pct = Math.round((score / TOTAL_QUESTIONS) * 100);
 
-  // Paliers (tu peux ajuster les seuils si tu veux)
-  // 100    = parfait
-  // 90–99  = très bon
-  // 75–89  = bon
-  // 60–74  = correct
-  // 40–59  = moyen
-  // 25–39  = pas bon
-  // 1–24   = catastrophique
-  // 0      = nul
   const TIERS = [
     { id: "parfait",        min: 100, msgs: [
       "Tu as probablement triché donc je ne vais pas trop te féliciter",
@@ -176,16 +188,14 @@ function maybeShowFinalScore() {
     ]}
   ];
 
-  // Trouver le bon palier
   let tier = TIERS.find(t => pct >= t.min);
   if (!tier) tier = TIERS[TIERS.length - 1];
 
-  // Message aléatoire dans le palier
   const note = tier.msgs[Math.floor(Math.random() * tier.msgs.length)];
 
   box.setAttribute("data-tier", tier.id);
   box.innerHTML = `
-    <h3>Score final : ${score}/${quizData.length} (${pct}%)</h3>
+    <h3>Score final : ${score}/${TOTAL_QUESTIONS} (${pct}%)</h3>
     <p>${note}</p>
     <button class="btn btn-restart" type="button">Recommencer</button>
   `;
@@ -194,9 +204,8 @@ function maybeShowFinalScore() {
   box.querySelector(".btn-restart").addEventListener("click", () => location.reload());
 }
 
-
-// Génération des cartes questions
-quizData.forEach((q, i) => {
+// --- Génération des cartes questions, mais seulement pour selectedQuestions ---
+selectedQuestions.forEach((q, i) => {
   const div = document.createElement("div");
   div.className = "question-card";
   div.innerHTML = `
@@ -211,7 +220,6 @@ quizData.forEach((q, i) => {
   const buttons = Array.from(div.querySelectorAll(".option-btn"));
   const result = div.querySelector(".result");
 
-  // Un seul clic possible : après réponse, on verrouille les boutons
   let locked = false;
 
   buttons.forEach(btn => {
@@ -219,7 +227,6 @@ quizData.forEach((q, i) => {
       if (locked) return;
       locked = true;
 
-      // Verrouille toutes les options pour cette question
       buttons.forEach(b => {
         b.disabled = true;
       });
@@ -232,7 +239,6 @@ quizData.forEach((q, i) => {
         result.classList.add("ok");
       } else {
         btn.classList.add("is-wrong");
-        // On ne révèle PAS la bonne réponse :
         const msg = WRONG_REACTIONS[Math.floor(Math.random() * WRONG_REACTIONS.length)];
         result.textContent = `❌ ${msg}`;
         result.classList.add("ko");
@@ -243,6 +249,7 @@ quizData.forEach((q, i) => {
     });
   });
 });
+
 
 
 
