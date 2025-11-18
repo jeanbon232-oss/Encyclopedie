@@ -183,8 +183,8 @@ function maybeShowFinalScore() {
     ]},
     { id: "nul",            min: 0, msgs: [
       "Nul. La honte des lecteurs. As-tu seulement ouvert le carnet ?",
-      "Zéro pointé mais merci pour l'effort.",
-      "Tout faux, faut le faire, relis l'entièreté du carnet tout de suite."
+      "Merci pour l'effort mais ça le fait pas du tout. Relis.",
+      "Un score aussi mauvais faut le faire, relis l'entièreté du carnet tout de suite."
     ]}
   ];
 
@@ -249,6 +249,7 @@ selectedQuestions.forEach((q, i) => {
     });
   });
 });
+
 
 
 
