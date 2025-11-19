@@ -2,74 +2,69 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Encyclopédie de la bière</title>
-  <!-- 👉 AJOUT ICI : favicon -->
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Jeu de la note — Encyclopédie de la bière</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6550173154545645"
-     crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <header class="container header-layout">
-    <div class="top-bar">
-      <a href="accueil.html" class="btn btn-back">← Retour à l’accueil</a>
-      <h1>Encyclopédie de la bière</h1>
-    </div>
-
-    <div class="controls">
-      <input id="search" type="search" placeholder="Rechercher (nom, style, notes)..." />
-      <select id="sort">
-        <option value="name-asc">Nom (A→Z)</option>
-        <option value="name-desc">Nom (Z→A)</option>
-        <option value="rating-desc">Note (haut→bas)</option>
-        <option value="rating-asc">Note (bas→haut)</option>
-      </select>
-      <button id="randomBtn" class="btn">Au hasard 🎲</button>
-    </div>
+  <header class="container">
+    <a href="accueil.html" class="btn">← Retour à l’accueil</a>
+    <h1>Jeu de la note</h1>
+    <p>
+      À chaque manche, choisis la bière que tu penses avoir la
+      <strong>note la plus élevée</strong> dans le carnet.
+    </p>
   </header>
 
-  <main id="list" class="grid container" aria-live="polite"></main>
-
-  <template id="beer-card">
-    <article class="card deckled">
-      <div class="card-head">
-        <h2 class="beer-name"></h2>
-        <span class="beer-rating"></span>
+  <main class="container">
+    <section class="note-game">
+      <div class="note-game__status">
+        <span id="ng-round">Manche 1/10</span>
+        <span id="ng-score">Score : 0</span>
       </div>
-      <p class="beer-style"></p>
-      <p class="beer-notes"></p>
-      <div class="meta">
-        <span class="beer-year"></span>
-        <span class="beer-source"></span>
-      </div>
-    </article>
-  </template>
 
-  <!-- === Modal fiche bière === -->
-  <div id="beer-modal" class="modal" hidden>
-    <div class="modal__backdrop"></div>
-    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="beer-title">
-      <button class="modal__close" aria-label="Fermer">×</button>
-      <div class="modal__content">
-        <div class="modal__media">
-          <img id="beer-img" alt="" loading="lazy">
-        </div>
-        <div class="modal__info">
-          <h2 id="beer-title"></h2>
-          <p class="beer-style" id="beer-style"></p>
-          <p class="beer-rating" id="beer-rating"></p>
-          <p class="beer-notes" id="beer-notes"></p>
-          <div class="modal__actions">
-            <a id="beer-link" class="btn" target="_blank" rel="noopener">Ouvrir le lien</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- === fin modal === -->
+      <div class="note-game__grid">
+        <button class="note-card" data-index="0">
+          <h2 class="note-name"></h2>
+          <p class="note-style"></p>
+          <p class="note-rating hidden"></p>
+        </button>
 
-  <script defer src="app.js"></script>
+        <button class="note-card" data-index="1">
+          <h2 class="note-name"></h2>
+          <p class="note-style"></p>
+          <p class="note-rating hidden"></p>
+        </button>
+      </div>
+
+      <p id="ng-feedback" class="note-game__feedback"></p>
+
+      <button id="ng-next" class="btn" disabled>Nouvelle paire</button>
+    </section>
+
+    <section id="ng-end" class="note-game__end" hidden>
+      <h2>Partie terminée</h2>
+      <p id="ng-final-score"></p>
+
+      <form id="ng-save-form">
+        <label>
+          Ton pseudo :
+          <input type="text" id="ng-name" maxlength="20" required>
+        </label>
+        <button type="submit" class="btn">Enregistrer dans le classement</button>
+      </form>
+    </section>
+
+    <section id="ng-leaderboard" class="note-game__leaderboard" hidden>
+      <h2>Classement local</h2>
+      <ol id="ng-leaderboard-list"></ol>
+      <p class="note-game__hint">
+        Classement enregistré dans ce navigateur uniquement.
+      </p>
+    </section>
+  </main>
+
+  <script defer src="jeu-note.js"></script>
 </body>
 </html>
