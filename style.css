@@ -615,3 +615,133 @@ body:not(.home):not(.privacy):not(.quiz) {
   max-width: 200px;
   height: auto;
 }
+
+/* =========================================================
+   📌 JEU DE LA NOTE — STYLE PROPRE ET LISIBLE
+   ========================================================= */
+
+/* Conteneur global */
+.note-game {
+  background: rgba(255, 253, 246, 0.9);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Statut (manche + score) */
+.note-game__status {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* Grille des deux bières */
+.note-game__grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 700px) {
+  .note-game__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Carte de bière */
+.note-card {
+  background: #fffdf6;              /* panneau clair */
+  color: #3b2f1a;                   /* texte brun lisible */
+  border: 1px solid #d5c7a3;
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease,
+              box-shadow 0.12s ease,
+              border-color 0.12s ease;
+}
+
+.note-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.note-card.is-correct {
+  border-color: #4caf50;
+}
+
+.note-card.is-wrong {
+  border-color: #e53935;
+}
+
+.note-card .note-name {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.note-card .note-style {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 0.4rem;
+}
+
+.note-card .note-rating {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Message sous la paire */
+.note-game__feedback {
+  margin: 1rem 0;
+  color: #3b2f1a;
+}
+
+/* Boîtes : fin de partie + leaderboard */
+.note-game__end,
+.note-game__leaderboard {
+  background: #fffdf6;
+  color: #3b2f1a;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #d5c7a3;
+}
+
+/* Titres & textes internes */
+.note-game__end h2,
+.note-game__end p,
+.note-game__end label,
+.note-game__leaderboard h2,
+.note-game__leaderboard p,
+.note-game__leaderboard li {
+  color: #3b2f1a;
+}
+
+/* Input pseudo */
+#ng-save-form input[type="text"] {
+  width: 100%;
+  max-width: 280px;
+  padding: 0.4rem 0.6rem;
+  margin-top: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid #d5c7a3;
+  background: #fffaf0;
+  color: #3b2f1a;
+}
+
+/* Liste du classement */
+.note-game__leaderboard ol {
+  padding-left: 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.note-game__hint {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
