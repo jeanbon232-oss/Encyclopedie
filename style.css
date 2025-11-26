@@ -745,3 +745,35 @@ body:not(.home):not(.privacy):not(.quiz) {
   opacity: 0.8;
 }
 
+/* Barre du haut : bouton retour + titre + bouton info */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;      /* important : permet de passer à la ligne sur mobile */
+}
+
+/* Bouton info rond, mais plus du tout en position absolute */
+.info-btn {
+  margin-left: auto;    /* pousse le bouton à droite de la ligne */
+  width: 32px;
+  height: 32px;
+  background: #8b4513;
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid #d6c9a9;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 16px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+  transition: background .25s;
+  flex: 0 0 auto;       /* ne s’étire pas, reste un petit rond */
+}
+
+.info-btn:hover {
+  background: #a25c2e;
+}
+
