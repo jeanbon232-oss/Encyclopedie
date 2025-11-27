@@ -777,5 +777,36 @@ body:not(.home):not(.privacy):not(.quiz) {
   background: #a25c2e;
 }
 
+.info-btn:hover {
+  background: #a25c2e;
+}
+
+.info-btn-home {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  background: #8b4513;
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid #d6c9a9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 18px;
+  transition: background .25s;
+  box-shadow: 0 4px 8px rgba(0,0,0,.25);
+}
+
+.info-btn-home:hover {
+  background: #a25c2e;
+}
+
+.home-card {
+  position: relative; /* permet au bouton de se placer en haut à droite */
+}
 
 
