@@ -134,7 +134,7 @@ body.home {
   padding: 24px 28px;
   border-radius: 6px;
   box-shadow: 0 8px 18px rgba(0,0,0,0.2);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* le cadre PNG superposé */
@@ -809,4 +809,32 @@ body:not(.home):not(.privacy):not(.quiz) {
   position: relative; /* permet au bouton de se placer en haut à droite */
 }
 
+.badge-coeur {
+  width: 24px;
+  height: 24px;
+  margin-left: 6px;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.coeur-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.coeur-tooltip {
+  position: absolute;
+  top: 50%;              /* centré verticalement sur le rubis */
+  left: 110%;            /* à droite du rubis */
+  transform: translateY(-50%);
+  background: rgba(250, 230, 220, 0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  white-space: nowrap;   /* tout sur une ligne */
+  border: 1px solid #b44;
+  color: #600;
+  z-index: 20;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
 
