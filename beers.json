@@ -461,7 +461,8 @@
     "rating": 17.0,
     "notes": "Pâtisserie vanillée maîtrisée, onctuosité et équilibre parfait des saveurs, c’est la crème de la crème",
     "year": null,
-    "source": "Carnet PDF"
+    "source": "Carnet PDF",
+    "coupDeCoeur": true
   },
   {
     "name": "Black 14",
@@ -517,7 +518,8 @@
     "rating": 16.25,
     "notes": "Pain aux olives, terrasse de Crète, elle évoque le temps de la sieste, le village est au repos entre 12h30 et 15h00, la vie y est à l’arrêt",
     "year": null,
-    "source": "Carnet PDF"
+    "source": "Carnet PDF",
+    "coupDeCoeur": true
   },
   {
     "name": "Blonde du Biez",
@@ -2381,7 +2383,8 @@
     "rating": 16.25,
     "notes": "les moutons vont paître en bas des falaises calcaires lorsque la mer est basse, ces bêtes sont habituées à la brise marine et à la salinité des végétaux qu’ils goûtent. On déguste une belle Saint-Jacques beurrée et braisée préparée selon une recette traditionnelle",
     "year": null,
-    "source": "Carnet PDF"
+    "source": "Carnet PDF",
+    "coupDeCoeur": true
   },
   {
     "name": "Maes",
