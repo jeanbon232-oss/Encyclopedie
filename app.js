@@ -65,8 +65,13 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
     nameEl.style.cursor = "pointer";
     nameEl.addEventListener("click", () => openBeerModal(b));
 
-    const ratingEl = node.querySelector('.beer-rating');
-    ratingEl.textContent = b.rating != null ? `${b.rating}/20` : '—';
+     const ratingEl = node.querySelector('.beer-rating');
+
+    // texte de base de la note
+    let ratingText = '—';
+    if (b.rating != null) {
+      ratingText = `${b.rating}/20`;
+    }
 
     // Couleur dynamique de la note (gère texte)
     if (b.rating != null) {
@@ -83,11 +88,37 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
         ratingEl.style.color = color;
       } else {
         // Cas "gag" (texte)
-        ratingEl.textContent = `${b.rating}/20`;
+        ratingText = `${b.rating}/20`;
         ratingEl.style.color = '#800080';     // violet
         ratingEl.style.fontWeight = '700';
       }
     }
+
+    if (b.coupDeCoeur) {
+  ratingEl.innerHTML = `
+    ${ratingText}
+    <span class="coeur-wrapper">
+      <img
+        src="img/coup-de-coeur.png"
+        alt="Coup de cœur des experts"
+        class="badge-coeur"
+      >
+      <span class="coeur-tooltip" hidden>Coup de cœur des experts</span>
+    </span>
+  `;
+
+  // rendre le rubis cliquable pour afficher/masquer le texte
+  const wrapper = ratingEl.querySelector('.coeur-wrapper');
+  const tooltip = ratingEl.querySelector('.coeur-tooltip');
+
+  wrapper.style.cursor = "pointer";
+  wrapper.addEventListener("click", () => {
+    tooltip.hidden = !tooltip.hidden;
+  });
+
+} else {
+  ratingEl.textContent = ratingText;
+}
 
     node.querySelector('.beer-style').textContent = b.style ?? '—';
     node.querySelector('.beer-notes').textContent = b.notes ?? '';
@@ -224,6 +255,7 @@ function openBeerModal(beer) {
   }
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
