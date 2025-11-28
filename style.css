@@ -838,3 +838,54 @@ body:not(.home):not(.privacy):not(.quiz) {
   box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
+body {
+  font-family: "Cormorant Garamond", serif;
+}
+
+body {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.card .beer-notes,
+.card {
+  max-width: 70ch; /* limite la longueur des lignes */
+  margin: auto;
+}
+
+body {
+  color: #2a241a; /* marron foncé lisible */
+}
+
+.card p {
+  margin-bottom: 1rem;
+}
+
+/* --- PAGE INFO : lecture longue --- */
+.info-page {
+  font-size: 20px;
+  line-height: 1.75;
+  font-weight: 700; /* texte un peu plus épais */
+}
+
+/* container un peu plus large sur cette page */
+.info-page .container {
+  width: min(1300px, 96vw);
+}
+
+/* le texte prend toute la largeur du container */
+.info-page p,
+.info-page li,
+.info-page ul {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.info-page ul {
+  padding-left: 2rem;
+}
+
+.info-page h1 {
+  margin-bottom: 1.2em;
+}
