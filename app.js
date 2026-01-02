@@ -10,14 +10,23 @@ let CURRENT_BEER_ID = null;
 
 supabase.auth.onAuthStateChange(async (_event, session) => {
   CURRENT_USER = session?.user ?? null;
-  await setupAuthUI();
 
-  // si la modale est ouverte, rafraîchir l'état du formulaire
+  // Met à jour les boutons login/logout
+  if (typeof setupAuthUI === "function") {
+    await setupAuthUI();
+  }
+
+  // Si la modale est ouverte, on rafraîchit l'état du formulaire
   const modal = document.getElementById("beer-modal");
-  if (modal && !modal.hidden && CURRENT_BEER_ID) {
+  if (
+    modal && !modal.hidden &&
+    CURRENT_BEER_ID &&
+    typeof setupCommentUIForBeer === "function"
+  ) {
     setupCommentUIForBeer(CURRENT_BEER_ID);
   }
 });
+
 
 async function setupAuthUI() {
   const { data } = await supabase.auth.getSession();
@@ -183,49 +192,53 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
 }
 
 (async function main() {
-  const user = await setupAuthUI();
-  
-  CURRENT_USER = user;
-  const beers = await loadBeers();
+  try {
+    const user = await setupAuthUI();
+    CURRENT_USER = user;
 
-  const search = document.getElementById('search');
-  const sort = document.getElementById('sort');
-  const randomBtn = document.getElementById('randomBtn');
+    const beers = await loadBeers();
 
-  let lastShown = [];
+    const search = document.getElementById('search');
+    const sort = document.getElementById('sort');
+    const randomBtn = document.getElementById('randomBtn');
 
-  function refresh() {
-    lastShown = render(beers, { q: search.value, sort: sort.value });
+    let lastShown = [];
+
+    function refresh() {
+      lastShown = render(beers, { q: search.value, sort: sort.value });
+    }
+
+    search.addEventListener('input', refresh);
+    sort.addEventListener('change', refresh);
+
+    if (randomBtn) {
+      randomBtn.addEventListener('click', (ev) => {
+        const pool = ev.shiftKey ? beers : lastShown;
+        if (!pool || pool.length === 0) return;
+
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        const key = `${pick.name}|${pick.rating ?? ''}`;
+
+        const target = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+        if (!target) return;
+
+        document.querySelectorAll('.card.flash').forEach(el => el.classList.remove('flash'));
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        void target.offsetWidth;
+        target.classList.add('flash');
+      });
+    }
+
+    refresh();
+  } catch (err) {
+    console.error("FATAL:", err);
+    const list = document.getElementById('list');
+    if (list) {
+      list.innerHTML = `<p style="color:#b00000;opacity:.9">
+        Erreur JS: ${String(err?.message || err)}
+      </p>`;
+    }
   }
-
-  // Filtres/tri
-  search.addEventListener('input', refresh);
-  sort.addEventListener('change', refresh);
-
-  // Bouton Au hasard 🎲
-  if (randomBtn) {
-    randomBtn.addEventListener('click', (ev) => {
-      const pool = ev.shiftKey ? beers : lastShown; // Shift = ignorer filtre
-      if (!pool || pool.length === 0) return;
-
-      const pick = pool[Math.floor(Math.random() * pool.length)];
-      const key = `${pick.name}|${pick.rating ?? ''}`;
-
-      const target = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
-      if (!target) return;
-
-      // nettoie un ancien flash
-      document.querySelectorAll('.card.flash').forEach(el => el.classList.remove('flash'));
-
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // redémarre l'anim
-      void target.offsetWidth;
-      target.classList.add('flash');
-    });
-  }
-
-  // Premier rendu
-  refresh();
 })();
 
 
@@ -438,3 +451,4 @@ function openBeerModal(beer) {
 
   document.addEventListener("keydown", onEsc);
 }
+
