@@ -8,32 +8,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let CURRENT_USER = null;
 let CURRENT_BEER_ID = null;
 
-supabase.auth.onAuthStateChange(async (_event, session) => {
-  CURRENT_USER = session?.user ?? null;
-
-  // Met à jour les boutons login/logout
-  if (typeof setupAuthUI === "function") {
-    await setupAuthUI();
-  }
-
-  // Si la modale est ouverte, on rafraîchit l'état du formulaire
-  const modal = document.getElementById("beer-modal");
-  if (
-    modal && !modal.hidden &&
-    CURRENT_BEER_ID &&
-    typeof setupCommentUIForBeer === "function"
-  ) {
-    setupCommentUIForBeer(CURRENT_BEER_ID);
-  }
-});
-
-
-async function setupAuthUI() {
-  const { data } = await supabase.auth.getSession();
-  const user = data.session?.user ?? null;
-
-  CURRENT_USER = user; // ✅ AJOUT
-
+function applyAuthUI(user) {
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
@@ -47,9 +22,36 @@ async function setupAuthUI() {
       window.location.reload();
     };
   }
+}
 
+supabase.auth.onAuthStateChange((_event, session) => {
+  CURRENT_USER = session?.user ?? null;
+  applyAuthUI(CURRENT_USER);
+
+  // Si la modale est ouverte, on rafraîchit l'état du formulaire
+  const modal = document.getElementById("beer-modal");
+  if (modal && !modal.hidden && CURRENT_BEER_ID) {
+    setupCommentUIForBeer(CURRENT_BEER_ID);
+  }
+});
+
+
+
+async function setupAuthUI() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error("getSession error:", error);
+    applyAuthUI(null);
+    CURRENT_USER = null;
+    return null;
+  }
+
+  const user = data.session?.user ?? null;
+  CURRENT_USER = user;
+  applyAuthUI(user);
   return user;
 }
+
 
 
 
@@ -193,9 +195,7 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
 
 (async function main() {
   try {
-    const user = await setupAuthUI();
-    CURRENT_USER = user;
-
+    await setupAuthUI();
     const beers = await loadBeers();
 
     const search = document.getElementById('search');
@@ -451,4 +451,5 @@ function openBeerModal(beer) {
 
   document.addEventListener("keydown", onEsc);
 }
+
 
