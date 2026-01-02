@@ -253,7 +253,7 @@ function formatDate(iso) {
 async function loadComments(beerId) {
   const { data, error } = await supabase
     .from("comments")
-    .select("id, content, created_at")
+    .select("id, content, created_at, profiles(username)")
     .eq("beer_id", beerId)
     .order("created_at", { ascending: false });
 
@@ -287,10 +287,16 @@ async function renderComments(beerId) {
   for (const c of comments) {
     const item = document.createElement("div");
     item.className = "comments__item";
+
+    // 👉 ICI : récupération du pseudo
+    const author = c.profiles?.username ?? "Anonyme";
+
     item.innerHTML = `
+      <div><strong>${escapeHtml(author)}</strong></div>
       <div>${escapeHtml(c.content)}</div>
       <div class="comments__meta">${formatDate(c.created_at)}</div>
     `;
+
     listEl.appendChild(item);
   }
 }
@@ -451,5 +457,6 @@ function openBeerModal(beer) {
 
   document.addEventListener("keydown", onEsc);
 }
+
 
 
