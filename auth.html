@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Connexion</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body class="home">
+  <main class="home-card" style="max-width:520px; width:min(520px, 92vw);">
+    <h1 style="margin:0 0 .25rem 0;">Connexion</h1>
+    <p class="subtitle" style="margin-top:0;">Connecte-toi pour commenter les bières.</p>
+
+    <form id="authForm" style="display:grid; gap:12px; text-align:left;">
+      <label>
+        Email
+        <input id="email" type="email" required
+               style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d3c6a1;" />
+      </label>
+
+      <label>
+        Mot de passe
+        <input id="password" type="password" minlength="8" required
+               style="width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d3c6a1;" />
+      </label>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" id="signupBtn" class="btn">Créer un compte</button>
+        <button type="button" id="loginBtn" class="btn">Se connecter</button>
+        <button type="button" id="resetBtn" class="btn" style="background:#6b5a45;">Mot de passe oublié</button>
+      </div>
+
+      <p id="msg" style="margin:0; min-height:1.5em;"></p>
+
+      <a href="accueil.html" class="btn" style="display:inline-block; text-align:center; background:#6b5a45;">
+        Retour
+      </a>
+    </form>
+  </main>
+
+  <script type="module" src="auth.js"></script>
+</body>
+</html>
+
