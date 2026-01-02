@@ -174,6 +174,8 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
 
 (async function main() {
   const user = await setupAuthUI();
+  let CURRENT_USER = null;
+  CURRENT_USER = user;
   const beers = await loadBeers();
 
   const search = document.getElementById('search');
@@ -215,6 +217,120 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
   // Premier rendu
   refresh();
 })();
+
+
+function formatDate(iso) {
+  try {
+    return new Date(iso).toLocaleString("fr-BE", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return "";
+  }
+}
+
+async function loadComments(beerId) {
+  const { data, error } = await supabase
+    .from("comments")
+    .select("id, content, created_at")
+    .eq("beer_id", beerId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("loadComments error:", error);
+    return [];
+  }
+  return data ?? [];
+}
+
+function setCommentMsg(text, isError = false) {
+  const el = document.getElementById("commentMsg");
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = isError ? "#b00000" : "";
+}
+
+async function renderComments(beerId) {
+  const listEl = document.getElementById("commentsList");
+  if (!listEl) return;
+
+  listEl.innerHTML = `<div style="opacity:.7;">Chargement…</div>`;
+  const comments = await loadComments(beerId);
+
+  if (!comments.length) {
+    listEl.innerHTML = `<div style="opacity:.7;">Aucun commentaire pour le moment.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = "";
+  for (const c of comments) {
+    const item = document.createElement("div");
+    item.className = "comments__item";
+    item.innerHTML = `
+      <div>${escapeHtml(c.content)}</div>
+      <div class="comments__meta">${formatDate(c.created_at)}</div>
+    `;
+    listEl.appendChild(item);
+  }
+}
+
+// Sécurise l'affichage (évite injection HTML)
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function postComment(beerId, content) {
+  // user_id est mis automatiquement en DB via default auth.uid()
+  const { error } = await supabase.from("comments").insert({
+    beer_id: beerId,
+    content
+  });
+  return error;
+}
+
+function setupCommentUIForBeer(beerId) {
+  const form = document.getElementById("commentForm");
+  const hint = document.getElementById("commentAuthHint");
+  const textarea = document.getElementById("commentContent");
+
+  if (!form || !hint) return;
+
+  // Affichage selon login
+  const isLoggedIn = !!CURRENT_USER;
+  form.hidden = !isLoggedIn;
+  hint.hidden = isLoggedIn;
+
+  // Nettoyage message + textarea
+  setCommentMsg("");
+  if (textarea) textarea.value = "";
+
+  // Attacher handler submit (en remplaçant l'ancien)
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    if (!CURRENT_USER) return;
+
+    const content = (textarea?.value ?? "").trim();
+    if (!content) return;
+
+    setCommentMsg("Publication…");
+    const err = await postComment(beerId, content);
+
+    if (err) {
+      console.error("postComment error:", err);
+      setCommentMsg("Impossible de publier (es-tu bien connecté ?).", true);
+      return;
+    }
+
+    if (textarea) textarea.value = "";
+    setCommentMsg("Publié.");
+    await renderComments(beerId);
+  };
+}
+
+
 
 /* === Fonctions pour la fiche bière (modal) === */
 
@@ -282,6 +398,11 @@ function openBeerModal(beer) {
 
   modal.hidden = false;
 
+    const beerId = beer.name || "unknown";
+  renderComments(beerId);
+  setupCommentUIForBeer(beerId);
+
+
   // fermeture
   modal.querySelector(".modal__close").onclick = () => modal.hidden = true;
   modal.querySelector(".modal__backdrop").onclick = () => modal.hidden = true;
@@ -293,6 +414,7 @@ function openBeerModal(beer) {
   }
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
