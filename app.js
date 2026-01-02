@@ -406,34 +406,41 @@ function openBeerModal(beer) {
 
   lEl.href = getBeerLink(beer);
 
+  // Ouvre
   modal.hidden = false;
 
-    const beerId = (beer.name || "unknown").trim();
-CURRENT_BEER_ID = beerId;
+  // Comments: fixe l'ID bière courant
+  const beerId = (beer.name || "unknown").trim();
+  CURRENT_BEER_ID = beerId;
 
-renderComments(beerId);
-setupCommentUIForBeer(beerId);
+  renderComments(beerId);
+  setupCommentUIForBeer(beerId);
 
-
-  // fermeture
+  // Fermeture centralisée
   function closeModal() {
-  modal.hidden = true;
-  CURRENT_BEER_ID = null;
-  document.removeEventListener("keydown", onEsc);
+    modal.hidden = true;
+    CURRENT_BEER_ID = null;
+    document.removeEventListener("keydown", onEsc);
+  }
+
+  function onEsc(e) {
+    if (e.key === "Escape") closeModal();
+  }
+
+  const closeBtn = modal.querySelector(".modal__close");
+  const backdrop = modal.querySelector(".modal__backdrop");
+
+  closeBtn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeModal();
+  };
+
+  backdrop.onclick = closeModal;
+  document.addEventListener("keydown", onEsc);
 }
 
-function onEsc(e) {
-  if (e.key === "Escape") closeModal();
-}
 
-modal.querySelector(".modal__close").onclick = (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  closeModal();
-};
-
-modal.querySelector(".modal__backdrop").onclick = closeModal;
-document.addEventListener("keydown", onEsc);
 
 
 
