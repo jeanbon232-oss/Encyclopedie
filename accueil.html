@@ -69,8 +69,26 @@
           <p class="beer-rating" id="beer-rating"></p>
           <p class="beer-notes" id="beer-notes"></p>
           <div class="modal__actions">
+            
             <a id="beer-link" class="btn" target="_blank" rel="noopener">Ouvrir le lien</a>
           </div>
+          <section class="comments" aria-labelledby="comments-title">
+  <h3 id="comments-title">Commentaires</h3>
+
+  <div id="commentsList" class="comments__list"></div>
+
+  <div id="commentAuthHint" class="comments__hint" hidden>
+    <a href="auth.html" class="btn">Se connecter pour commenter</a>
+  </div>
+
+  <form id="commentForm" class="comments__form" hidden>
+    <label for="commentContent" class="sr-only">Ajouter un commentaire</label>
+    <textarea id="commentContent" rows="3" placeholder="Ton commentaire..." required></textarea>
+    <button class="btn" type="submit">Publier</button>
+    <p id="commentMsg" class="comments__msg" aria-live="polite"></p>
+  </form>
+</section>
+
         </div>
       </div>
     </div>
@@ -80,6 +98,7 @@
   <script type="module" src="app.js"></script>
 </body>
 </html>
+
 
 
 
