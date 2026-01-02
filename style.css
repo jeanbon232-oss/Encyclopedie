@@ -889,3 +889,10 @@ body {
 .info-page h1 {
   margin-bottom: 1.2em;
 }
+
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
