@@ -16,9 +16,14 @@
 <body>
   <header class="container header-layout">
     <div class="top-bar">
-      <a href="index.html" class="btn btn-back">← Retour à l’accueil</a>
-      <h1>Encyclopédie de la bière</h1>
-    </div>
+  <a href="index.html" class="btn btn-back">← Retour à l’accueil</a>
+  <h1>Encyclopédie de la bière</h1>
+
+  <div class="auth-actions">
+    <a href="auth.html" id="loginBtn" class="btn">Se connecter</a>
+    <button id="logoutBtn" class="btn" hidden>Déconnexion</button>
+  </div>
+</div>
 
     <div class="controls">
       <input id="search" type="search" placeholder="Rechercher (nom, style, notes)..." />
@@ -75,6 +80,7 @@
   <script defer src="app.js"></script>
 </body>
 </html>
+
 
 
 
