@@ -409,14 +409,13 @@ function openBeerModal(beer) {
   // Ouvre
   modal.hidden = false;
 
-  // Comments: fixe l'ID bière courant
+  // Comments
   const beerId = (beer.name || "unknown").trim();
   CURRENT_BEER_ID = beerId;
-
   renderComments(beerId);
   setupCommentUIForBeer(beerId);
 
-  // Fermeture centralisée
+  // Fermeture robuste
   function closeModal() {
     modal.hidden = true;
     CURRENT_BEER_ID = null;
@@ -435,19 +434,7 @@ function openBeerModal(beer) {
     e.stopPropagation();
     closeModal();
   };
-
   backdrop.onclick = closeModal;
+
   document.addEventListener("keydown", onEsc);
 }
-
-
-
-
-
-
-
-
-
-
-
-
