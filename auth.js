@@ -5,6 +5,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// IMPORTANT : origine canonique (doit correspondre à Supabase "Site URL")
+const SITE = "https://www.bierepedia.com";
+
 const $ = (id) => document.getElementById(id);
 
 function setMsg(text, isError = false) {
@@ -15,7 +18,7 @@ function setMsg(text, isError = false) {
 
 async function redirectIfLoggedIn() {
   const { data } = await supabase.auth.getSession();
-  if (data?.session) window.location.href = "index.html";
+  if (data?.session) window.location.href = `${SITE}/accueil.html`;
 }
 
 async function signup() {
@@ -26,7 +29,7 @@ async function signup() {
   const { error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${window.location.origin}/index.html` },
+    options: { emailRedirectTo: `${SITE}/accueil.html` },
   });
 
   if (error) return setMsg(error.message, true);
@@ -41,7 +44,7 @@ async function login() {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return setMsg(error.message, true);
 
-  if (data?.session) window.location.href = "index.html";
+  if (data?.session) window.location.href = `${SITE}/accueil.html`;
   else setMsg("Connexion non établie. Réessaie.", true);
 }
 
@@ -51,7 +54,7 @@ async function resetPassword() {
 
   setMsg("Envoi du mail de réinitialisation...");
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/auth.html`,
+    redirectTo: `${SITE}/auth.html`,
   });
 
   if (error) return setMsg(error.message, true);
@@ -63,3 +66,4 @@ $("loginBtn").addEventListener("click", login);
 $("resetBtn").addEventListener("click", resetPassword);
 
 redirectIfLoggedIn();
+
