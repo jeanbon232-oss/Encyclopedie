@@ -1,3 +1,40 @@
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqYW53ZnhidGd2eGpnb2hsbGl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMzM0MTIsImV4cCI6MjA4MjkwOTQxMn0.3GHwxMSKd1RYagskXzU6QyyVxoJJsfxZV5QeOVmweBk";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+supabase.auth.onAuthStateChange(() => {
+  setupAuthUI();
+});
+
+async function setupAuthUI() {
+  const { data } = await supabase.auth.getSession();
+  const user = data.session?.user ?? null;
+
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (user) {
+    if (loginBtn) loginBtn.hidden = true;
+    if (logoutBtn) {
+      logoutBtn.hidden = false;
+      logoutBtn.onclick = async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+      };
+    }
+  } else {
+    if (loginBtn) loginBtn.hidden = false;
+    if (logoutBtn) logoutBtn.hidden = true;
+  }
+
+  return user;
+}
+
+
+
 // Charge le JSON
 async function loadBeers() {
   const res = await fetch('beers.json', { cache: 'no-store' });
@@ -136,6 +173,7 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
 }
 
 (async function main() {
+  const user = await setupAuthUI();
   const beers = await loadBeers();
 
   const search = document.getElementById('search');
@@ -255,6 +293,7 @@ function openBeerModal(beer) {
   }
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
