@@ -5,33 +5,43 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-supabase.auth.onAuthStateChange(() => {
-  setupAuthUI();
+let CURRENT_USER = null;
+let CURRENT_BEER_ID = null;
+
+supabase.auth.onAuthStateChange(async (_event, session) => {
+  CURRENT_USER = session?.user ?? null;
+  await setupAuthUI();
+
+  // si la modale est ouverte, rafraîchir l'état du formulaire
+  const modal = document.getElementById("beer-modal");
+  if (modal && !modal.hidden && CURRENT_BEER_ID) {
+    setupCommentUIForBeer(CURRENT_BEER_ID);
+  }
 });
 
 async function setupAuthUI() {
   const { data } = await supabase.auth.getSession();
   const user = data.session?.user ?? null;
 
+  CURRENT_USER = user; // ✅ AJOUT
+
   const loginBtn = document.getElementById("loginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
 
-  if (user) {
-    if (loginBtn) loginBtn.hidden = true;
-    if (logoutBtn) {
-      logoutBtn.hidden = false;
-      logoutBtn.onclick = async () => {
-        await supabase.auth.signOut();
-        window.location.reload();
-      };
-    }
-  } else {
-    if (loginBtn) loginBtn.hidden = false;
-    if (logoutBtn) logoutBtn.hidden = true;
+  if (loginBtn) loginBtn.hidden = !!user;
+  if (logoutBtn) logoutBtn.hidden = !user;
+
+  if (user && logoutBtn) {
+    logoutBtn.onclick = async (e) => {
+      e.preventDefault?.();
+      await supabase.auth.signOut();
+      window.location.reload();
+    };
   }
 
   return user;
 }
+
 
 
 
@@ -174,7 +184,7 @@ function render(beers, { q = '', sort = 'name-asc' } = {}) {
 
 (async function main() {
   const user = await setupAuthUI();
-  let CURRENT_USER = null;
+  
   CURRENT_USER = user;
   const beers = await loadBeers();
 
@@ -398,22 +408,34 @@ function openBeerModal(beer) {
 
   modal.hidden = false;
 
-    const beerId = beer.name || "unknown";
-  renderComments(beerId);
-  setupCommentUIForBeer(beerId);
+    const beerId = (beer.name || "unknown").trim();
+CURRENT_BEER_ID = beerId;
+
+renderComments(beerId);
+setupCommentUIForBeer(beerId);
 
 
   // fermeture
-  modal.querySelector(".modal__close").onclick = () => modal.hidden = true;
-  modal.querySelector(".modal__backdrop").onclick = () => modal.hidden = true;
-  function onEsc(e) {
-    if (e.key === "Escape") {
-      modal.hidden = true;
-      document.removeEventListener("keydown", onEsc);
-    }
-  }
-  document.addEventListener("keydown", onEsc);
+  function closeModal() {
+  modal.hidden = true;
+  CURRENT_BEER_ID = null;
+  document.removeEventListener("keydown", onEsc);
 }
+
+function onEsc(e) {
+  if (e.key === "Escape") closeModal();
+}
+
+modal.querySelector(".modal__close").onclick = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  closeModal();
+};
+
+modal.querySelector(".modal__backdrop").onclick = closeModal;
+document.addEventListener("keydown", onEsc);
+
+
 
 
 
