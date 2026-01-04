@@ -928,3 +928,8 @@ body {
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
+/* Empêche le scroll de la page derrière la modale */
+body.modal-open {
+  overflow: hidden;
+}
+
