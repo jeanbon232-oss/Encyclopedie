@@ -427,6 +427,7 @@ function openBeerModal(beer) {
 
   // Ouvre
   modal.hidden = false;
+  document.body.classList.add("modal-open");
 
   // Comments
   const beerId = (beer.name || "unknown").trim();
@@ -435,11 +436,14 @@ function openBeerModal(beer) {
   setupCommentUIForBeer(beerId);
 
   // Fermeture robuste
+  
   function closeModal() {
-    modal.hidden = true;
-    CURRENT_BEER_ID = null;
-    document.removeEventListener("keydown", onEsc);
-  }
+  modal.hidden = true;
+  document.body.classList.remove("modal-open"); // ✅ IMPORTANT
+  CURRENT_BEER_ID = null;
+  document.removeEventListener("keydown", onEsc);
+}
+
 
   function onEsc(e) {
     if (e.key === "Escape") closeModal();
@@ -457,6 +461,7 @@ function openBeerModal(beer) {
 
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
