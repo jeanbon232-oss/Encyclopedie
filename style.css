@@ -631,7 +631,7 @@ body:not(.home):not(.privacy):not(.quiz) {
 }
 
 /* =========================================================
-   📌 JEU DE LA NOTE — STYLE PROPRE ET LISIBLE
+    JEU DE LA NOTE
    ========================================================= */
 
 /* Conteneur global */
@@ -932,4 +932,5 @@ body {
 body.modal-open {
   overflow: hidden;
 }
+
 
