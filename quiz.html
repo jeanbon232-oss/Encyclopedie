@@ -6,18 +6,32 @@
   <title>Quiz impossible — Encyclopédie de la bière</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="quiz">
-  <header class="container">
-    <a href="index.html" class="btn">← Retour</a>
-    <h1>Le Quiz 🍺</h1>
-    <p>Le lecteur attentif obtient un score élevé sans trop de difficultés. Bonne chance.</p>
+  <header class="container header-layout">
+    <div class="top-bar">
+      <a href="accueil.html" class="btn btn-back">← Retour</a>
+
+      <div>
+        <h1>Le Quiz 🍺</h1>
+        <p>Le lecteur attentif obtient un score élevé sans trop de difficultés. Bonne chance.</p>
+      </div>
+
+      <div class="auth-actions">
+        <a href="auth.html" id="loginBtn" class="btn">Se connecter</a>
+        <button id="logoutBtn" class="btn" hidden>Déconnexion</button>
+      </div>
+    </div>
   </header>
 
   <main id="quiz-container" class="container">
     <!-- Les questions seront injectées ici -->
   </main>
 
-  <script defer src="quiz.js"></script>
+  <!-- Important : module pour pouvoir importer Supabase -->
+  <script type="module" src="quiz.js"></script>
 </body>
 </html>
+
+
 
