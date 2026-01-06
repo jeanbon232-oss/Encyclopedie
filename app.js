@@ -56,14 +56,14 @@ async function setupAuthUI() {
 
 
 
-// Charge le JSON
+// Charger JSON
 async function loadBeers() {
   const res = await fetch('beers.json', { cache: 'no-store' });
   if (!res.ok) throw new Error('Impossible de charger beers.json');
   return res.json();
 }
 
-// Rendu + retour de la liste affichée
+// retour de liste
 function render(beers, { q = '', sort = 'name-asc' } = {}) {
   const list = document.getElementById('list');
   const tpl = document.getElementById('beer-card');
@@ -301,7 +301,7 @@ async function renderComments(beerId) {
   }
 }
 
-// Sécurise l'affichage (évite injection HTML)
+// Sécurisation
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -439,7 +439,7 @@ function openBeerModal(beer) {
   
   function closeModal() {
   modal.hidden = true;
-  document.body.classList.remove("modal-open"); // ✅ IMPORTANT
+  document.body.classList.remove("modal-open"); // IMPORTANT
   CURRENT_BEER_ID = null;
   document.removeEventListener("keydown", onEsc);
 }
@@ -461,6 +461,7 @@ function openBeerModal(beer) {
 
   document.addEventListener("keydown", onEsc);
 }
+
 
 
 
