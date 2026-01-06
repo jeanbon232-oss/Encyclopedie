@@ -1,3 +1,6 @@
+import { supabase, setupAuthUI } from "./auth-ui.js";
+const CURRENT_USER = await setupAuthUI();
+
 const MAX_ROUNDS = 10;
 const LEADERBOARD_KEY = "bierpedia_note_game_leaderboard";
 
