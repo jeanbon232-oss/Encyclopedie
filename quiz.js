@@ -1,3 +1,6 @@
+import { supabase, setupAuthUI } from "./auth-ui.js";
+const CURRENT_USER = await setupAuthUI();
+
 // --- Données du quiz (pool complet) ---
 const quizData = [
   {
@@ -249,6 +252,7 @@ selectedQuestions.forEach((q, i) => {
     });
   });
 });
+
 
 
 
