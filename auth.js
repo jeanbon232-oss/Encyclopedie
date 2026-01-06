@@ -5,7 +5,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// IMPORTANT : origine canonique (doit correspondre à Supabase "Site URL")
+
 const SITE = "https://www.bierepedia.com";
 
 const $ = (id) => document.getElementById(id);
