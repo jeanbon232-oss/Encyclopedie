@@ -7,14 +7,25 @@
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <header class="container">
-    <a href="accueil.html" class="btn">← Retour à l’accueil</a>
-    <h1>Jeu de la note</h1>
-    <p>
-      À chaque manche, sélectionnez la bière que vous pensez avoir la
-      <strong>note la plus élevée</strong> dans le carnet.
-    </p>
+  <header class="container header-layout">
+    <div class="top-bar">
+      <a href="accueil.html" class="btn btn-back">← Retour</a>
+
+      <div>
+        <h1>Jeu de la note</h1>
+        <p>
+          À chaque manche, sélectionnez la bière que vous pensez avoir la
+          <strong>note la plus élevée</strong> dans le carnet.
+        </p>
+      </div>
+
+      <div class="auth-actions">
+        <a href="auth.html" id="loginBtn" class="btn">Se connecter</a>
+        <button id="logoutBtn" class="btn" hidden>Déconnexion</button>
+      </div>
+    </div>
   </header>
 
   <main class="container">
@@ -47,6 +58,7 @@
       <h2>Partie terminée</h2>
       <p id="ng-final-score"></p>
 
+      <!-- Si non connecté, on masquera ce form côté JS et on affichera un lien login -->
       <form id="ng-save-form">
         <label>
           Ton pseudo :
@@ -54,17 +66,29 @@
         </label>
         <button type="submit" class="btn">Enregistrer dans le classement</button>
       </form>
+
+      <!-- Option recommandé : hint "connecte-toi" -->
+      <p id="ng-auth-hint" class="note-game__hint" hidden>
+        <a href="auth.html" class="btn">Se connecter pour apparaître dans le classement</a>
+      </p>
+
+      <!-- Option recommandé : message d'état -->
+      <p id="ng-save-msg" class="note-game__hint" aria-live="polite"></p>
     </section>
 
     <section id="ng-leaderboard" class="note-game__leaderboard" hidden>
-      <h2>Classement local</h2>
+      <h2>Classement</h2>
       <ol id="ng-leaderboard-list"></ol>
-      <p class="note-game__hint">
+
+      <!-- On pourra ensuite adapter ce texte : "global" au lieu de "local" -->
+      <p class="note-game__hint" id="ng-leaderboard-hint">
         Classement enregistré dans ce navigateur uniquement.
       </p>
     </section>
   </main>
 
-  <script defer src="jeu-note.js"></script>
+  <!-- Important : module pour pouvoir importer Supabase -->
+  <script type="module" src="jeu-note.js"></script>
 </body>
 </html>
+
