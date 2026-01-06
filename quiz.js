@@ -1,7 +1,11 @@
 import { supabase, setupAuthUI } from "./auth-ui.js";
-const CURRENT_USER = await setupAuthUI();
 
-// --- Données du quiz (pool complet) ---
+
+let CURRENT_USER = await setupAuthUI();
+
+/* -----------------------------
+   Données du quiz (pool complet)
+----------------------------- */
 const quizData = [
   {
     question: "Quelle est la meilleure Duvel ?",
@@ -69,7 +73,8 @@ const quizData = [
     correct: "Brugge Tripel"
   },
   {
-    question: "Quelle bière fait référence au titre d'une célèbre émission culinaire animée par le chef Philippe Etchebest ?",
+    question:
+      "Quelle bière fait référence au titre d'une célèbre émission culinaire animée par le chef Philippe Etchebest ?",
     options: ["Sanglipa", "Affligem Blonde", "La grisette bio"],
     correct: "Sanglipa"
   },
@@ -99,7 +104,8 @@ const quizData = [
     correct: "Saison de Dottignies"
   },
   {
-    question: "Strandlover Velskabt Wit : Pourquoi le charpentier trempe-t-il le bois dans une solution chaude ?",
+    question:
+      "Strandlover Velskabt Wit : Pourquoi le charpentier trempe-t-il le bois dans une solution chaude ?",
     options: ["Pour le protéger des parasites", "Pour l’assouplir", "Pour changer sa teinte"],
     correct: "Pour l’assouplir"
   }
@@ -127,11 +133,11 @@ const container = document.getElementById("quiz-container");
 let score = 0;
 let answeredCount = 0;
 
-// --- NOUVEAU : tirage aléatoire de 10 questions parmi tout le pool ---
-
+/* -----------------------------
+   Tirage aléatoire de 10 questions
+----------------------------- */
 const QUESTIONS_PER_RUN = 10;
 
-// petit shuffle Fisher–Yates
 function shuffleArray(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -140,14 +146,91 @@ function shuffleArray(arr) {
   return arr;
 }
 
-// on crée une copie mélangée et on en prend 10 (ou moins si le pool est plus petit)
 const selectedQuestions = shuffleArray([...quizData]).slice(0, QUESTIONS_PER_RUN);
-
-// pour le calcul du score / pour savoir quand on a fini :
 const TOTAL_QUESTIONS = selectedQuestions.length;
 
-// ------------------------------------------------------------
+/* -----------------------------
+   Supabase helpers (pseudo + scores)
+----------------------------- */
+function sanitizeUsername(v) {
+  return String(v ?? "").trim().slice(0, 20);
+}
 
+async function refreshCurrentUser() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) return null;
+  CURRENT_USER = data?.session?.user ?? null;
+  return CURRENT_USER;
+}
+
+async function getMyUsername(userId) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) return null;
+  return data?.username ?? null;
+}
+
+async function upsertMyUsername(userId, username) {
+  const u = sanitizeUsername(username);
+  if (!u) return { error: { message: "Pseudo requis." } };
+
+  // nécessite UPDATE own et (si row absente) INSERT own sur profiles
+  return await supabase
+    .from("profiles")
+    .upsert({ id: userId, username: u }, { onConflict: "id" });
+}
+
+async function insertQuizScore(userId, scoreValue, totalValue) {
+  return await supabase
+    .from("quiz_scores")
+    .insert({ user_id: userId, score: scoreValue, total: totalValue });
+}
+
+async function loadQuizLeaderboardTop20() {
+  // On récupère les scores, puis les pseudos correspondants
+  const { data: scoresRows, error: sErr } = await supabase
+    .from("quiz_scores")
+    .select("user_id, score, total, created_at")
+    .order("score", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (sErr) {
+    console.error("quiz_scores select error:", sErr);
+    return [];
+  }
+
+  const rows = scoresRows ?? [];
+  const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+
+  let profileMap = new Map();
+  if (ids.length) {
+    const { data: profiles, error: pErr } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", ids);
+
+    if (pErr) {
+      console.error("profiles select error:", pErr);
+    } else {
+      (profiles ?? []).forEach(p => profileMap.set(p.id, p.username));
+    }
+  }
+
+  return rows.map(r => ({
+    username: profileMap.get(r.user_id) || "Anonyme",
+    score: r.score,
+    total: r.total
+  }));
+}
+
+/* -----------------------------
+   Fin de quiz : score + save + leaderboard
+----------------------------- */
 function maybeShowFinalScore() {
   if (answeredCount !== TOTAL_QUESTIONS) return;
 
@@ -157,34 +240,34 @@ function maybeShowFinalScore() {
   const pct = Math.round((score / TOTAL_QUESTIONS) * 100);
 
   const TIERS = [
-    { id: "parfait",        min: 100, msgs: [
+    { id: "parfait", min: 100, msgs: [
       "Tu as probablement triché donc je ne vais pas trop te féliciter",
       "Impossible d'atteindre ce score du premier coup, et si c'est le cas, je n'ai pas les mots."
     ]},
-    { id: "tres-bon",       min: 90, msgs: [
+    { id: "tres-bon", min: 90, msgs: [
       "Score tellement élevé que ça devient suspect...",
       "Comment est-ce possible si ce n'est de la chance? Félicitations !"
     ]},
-    { id: "bon",            min: 75, msgs: [
+    { id: "bon", min: 75, msgs: [
       "Très belle lecture du carnet. Chapeau bas de la part des experts.",
       "Solide prestation, on sent l’expérience.",
     ]},
-    { id: "correct",        min: 60, msgs: [
+    { id: "correct", min: 60, msgs: [
       "On sent que la lecture a été attentive",
       "Bravo, un tel score traduit une lecture attentive.",
       "Tu peux monter d’un cran avec un peu plus d'expérience."
     ]},
-    { id: "moyen",          min: 40, msgs: [
+    { id: "moyen", min: 40, msgs: [
       "Moyen. Encore un chapitre du carnet ce soir ?",
       "Bof mais tu as du potentiel… remets-toi à la lecture.",
       "On a vu pire, on a vu mieux."
     ]},
-    { id: "pas-bon",        min: 25, msgs: [
+    { id: "pas-bon", min: 25, msgs: [
       "Pas bon. Remets-toi de suite à la lecture.",
       "Aïe… Ce score est presque insultant pour les experts.",
       "On révise d'abord puis on s'y remet."
     ]},
-    { id: "nul",            min: 0, msgs: [
+    { id: "nul", min: 0, msgs: [
       "Nul. La honte des lecteurs. As-tu seulement ouvert le carnet ?",
       "Merci pour l'effort mais ça le fait pas du tout. Relis.",
       "Un score aussi mauvais faut le faire, relis l'entièreté du carnet tout de suite."
@@ -197,17 +280,110 @@ function maybeShowFinalScore() {
   const note = tier.msgs[Math.floor(Math.random() * tier.msgs.length)];
 
   box.setAttribute("data-tier", tier.id);
+
+  // UI leaderboard + save
   box.innerHTML = `
     <h3>Score final : ${score}/${TOTAL_QUESTIONS} (${pct}%)</h3>
     <p>${note}</p>
-    <button class="btn btn-restart" type="button">Recommencer</button>
+
+    <div id="quiz-auth-hint" style="margin-top:12px;" hidden>
+      <a href="auth.html" class="btn">Se connecter pour apparaître dans le classement</a>
+    </div>
+
+    <form id="quiz-save-form" style="display:grid; gap:10px; margin-top:12px;" hidden>
+      <label>
+        Ton pseudo :
+        <input id="quiz-username" type="text" maxlength="20" required style="max-width:280px;">
+      </label>
+      <button class="btn" type="submit">Enregistrer dans le classement</button>
+      <p id="quiz-save-msg" class="result" aria-live="polite"></p>
+    </form>
+
+    <div id="quiz-leaderboard" style="margin-top:16px;" hidden>
+      <h4 style="margin: 0 0 8px 0;">Top 20 (global)</h4>
+      <ol id="quiz-leaderboard-list" style="text-align:left; margin:0; padding-left: 20px;"></ol>
+      <p class="note-game__hint" style="margin-top:8px;">Classement basé sur les meilleurs scores, puis les plus récents.</p>
+    </div>
+
+    <button class="btn btn-restart" type="button" style="margin-top: 12px;">Recommencer</button>
   `;
+
   container.appendChild(box);
 
   box.querySelector(".btn-restart").addEventListener("click", () => location.reload());
+
+  // Wire up logic
+  const authHintEl = box.querySelector("#quiz-auth-hint");
+  const formEl = box.querySelector("#quiz-save-form");
+  const usernameEl = box.querySelector("#quiz-username");
+  const msgEl = box.querySelector("#quiz-save-msg");
+  const lbWrapEl = box.querySelector("#quiz-leaderboard");
+  const lbListEl = box.querySelector("#quiz-leaderboard-list");
+
+  function setMsg(t, isError = false) {
+    msgEl.textContent = t || "";
+    msgEl.classList.toggle("ko", !!isError);
+    msgEl.classList.toggle("ok", !isError && !!t);
+  }
+
+  function renderLeaderboard(entries) {
+    lbListEl.innerHTML = "";
+    entries.forEach((e, i) => {
+      const li = document.createElement("li");
+      li.textContent = `${i + 1}. ${e.username} — ${e.score}/${e.total}`;
+      lbListEl.appendChild(li);
+    });
+    lbWrapEl.hidden = entries.length === 0;
+  }
+
+  async function refreshLeaderboard() {
+    const entries = await loadQuizLeaderboardTop20();
+    renderLeaderboard(entries);
+  }
+
+  (async () => {
+    await refreshLeaderboard();
+
+    const user = await refreshCurrentUser();
+    if (!user) {
+      authHintEl.hidden = false;
+      formEl.hidden = true;
+      return;
+    }
+
+    authHintEl.hidden = true;
+    formEl.hidden = false;
+
+    const existing = await getMyUsername(user.id);
+    if (existing) usernameEl.value = existing;
+
+    formEl.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      setMsg("");
+
+      const pseudo = sanitizeUsername(usernameEl.value);
+      if (!pseudo) return setMsg("Pseudo requis.", true);
+
+      setMsg("Enregistrement…");
+
+      const { error: uErr } = await upsertMyUsername(user.id, pseudo);
+      if (uErr) return setMsg(uErr.message || "Erreur pseudo.", true);
+
+      const { error: sErr } = await insertQuizScore(user.id, score, TOTAL_QUESTIONS);
+      if (sErr) {
+        console.error("quiz_scores insert error:", sErr);
+        return setMsg(sErr.message || "Erreur enregistrement score.", true);
+      }
+
+      setMsg("Score enregistré.");
+      await refreshLeaderboard();
+    });
+  })();
 }
 
-// --- Génération des cartes questions, mais seulement pour selectedQuestions ---
+/* -----------------------------
+   Génération des cartes questions
+----------------------------- */
 selectedQuestions.forEach((q, i) => {
   const div = document.createElement("div");
   div.className = "question-card";
@@ -230,9 +406,7 @@ selectedQuestions.forEach((q, i) => {
       if (locked) return;
       locked = true;
 
-      buttons.forEach(b => {
-        b.disabled = true;
-      });
+      buttons.forEach(b => (b.disabled = true));
 
       const chosen = btn.textContent.trim();
       if (chosen === q.correct) {
@@ -252,6 +426,8 @@ selectedQuestions.forEach((q, i) => {
     });
   });
 });
+
+
 
 
 
