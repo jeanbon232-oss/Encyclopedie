@@ -1,31 +1,16 @@
 import { supabase, setupAuthUI } from "./auth-ui.js";
 
-// Bloque la page si pas connecté
-async function requireAuth() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) console.error("getSession error:", error);
+// 1) Initialise l’UI login/logout (si tu l’utilises sur la page)
+const CURRENT_USER = await setupAuthUI();
 
-  if (!data?.session) {
-    const returnTo = encodeURIComponent("quiz.html");
-    window.location.href = `auth.html?return=${returnTo}`;
-    return null;
-  }
-  return data.session.user;
+// 2) Bloque la page si pas connecté
+if (!CURRENT_USER) {
+  const returnTo = encodeURIComponent("quiz.html");
+  window.location.href = `auth.html?return=${returnTo}`;
+  // On stoppe proprement l’exécution (pas de throw => pas d’écran blanc “cassé”)
+  throw new Error("Redirecting to login"); // optionnel, tu peux aussi faire: export {} et return (mais top-level return interdit)
 }
 
-const user = await requireAuth();
-if (!user) throw new Error("Not authenticated");
-
-// Optionnel : si tu veux garder ton UI login/logout sur la page
-let CURRENT_USER = await setupAuthUI();
-
-
-
-
-import { supabase, setupAuthUI } from "./auth-ui.js";
-
-
-let CURRENT_USER = await setupAuthUI();
 
 /* -----------------------------
    Données du quiz (pool complet)
@@ -450,6 +435,7 @@ selectedQuestions.forEach((q, i) => {
     });
   });
 });
+
 
 
 
