@@ -933,18 +933,34 @@ body.modal-open {
   overflow: hidden;
 }
 
-html, body {
-  height: 100%;
+/* =========================
+   QUIZ — fond parchemin plein écran + centrage (override final)
+   ========================= */
+
+/* Le fond est porté par <html> => ne “s’arrête” jamais */
+html {
+  background-color: #f4efe4;
+  background-image: url("img/parchment.jpg");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+  background-attachment: fixed;
 }
+
+/* Le body du quiz laisse le fond de <html> visible */
 body.quiz {
+  background: transparent !important;
   min-height: 100vh;
-  background: var(--paper-bg, #f6f1e7); /* ou ton fond parchemin actuel */
 }
-.quiz #quiz-container {
-  min-height: calc(100vh - 120px); /* hauteur écran - header */
+
+/* Centrage de la boîte “Connexion requise” quand il n’y a pas de quiz */
+body.quiz #quiz-container {
+  min-height: calc(100vh - 140px); /* ajuste si ton header est + grand */
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+
 
 
