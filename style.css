@@ -933,4 +933,18 @@ body.modal-open {
   overflow: hidden;
 }
 
+html, body {
+  height: 100%;
+}
+body.quiz {
+  min-height: 100vh;
+  background: var(--paper-bg, #f6f1e7); /* ou ton fond parchemin actuel */
+}
+.quiz #quiz-container {
+  min-height: calc(100vh - 120px); /* hauteur écran - header */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 
