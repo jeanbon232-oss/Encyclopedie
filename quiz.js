@@ -1,15 +1,10 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { supabase, setupAuthUI } from "./auth-ui.js";
 
-const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqYW53ZnhidGd2eGpnb2hsbGl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMzM0MTIsImV4cCI6MjA4MjkwOTQxMn0.3GHwxMSKd1RYagskXzU6QyyVxoJJsfxZV5QeOVmweBk";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+// Bloque la page si pas connecté
 async function requireAuth() {
   const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error("getSession error:", error);
-  }
+  if (error) console.error("getSession error:", error);
+
   if (!data?.session) {
     const returnTo = encodeURIComponent("quiz.html");
     window.location.href = `auth.html?return=${returnTo}`;
@@ -18,9 +13,12 @@ async function requireAuth() {
   return data.session.user;
 }
 
-// Empêche l’exécution du quiz si pas loggé
 const user = await requireAuth();
 if (!user) throw new Error("Not authenticated");
+
+// Optionnel : si tu veux garder ton UI login/logout sur la page
+let CURRENT_USER = await setupAuthUI();
+
 
 
 
@@ -452,6 +450,7 @@ selectedQuestions.forEach((q, i) => {
     });
   });
 });
+
 
 
 
