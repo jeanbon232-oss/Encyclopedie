@@ -953,13 +953,19 @@ body.quiz {
   min-height: 100vh;
 }
 
-/* Centrage de la boîte “Connexion requise” quand il n’y a pas de quiz */
+/* Par défaut (connecté) : le quiz s’affiche normalement en colonne */
 body.quiz #quiz-container {
+  display: block;
+}
+
+/* Seulement quand on est déconnecté : on centre la boîte */
+body.quiz.needs-auth #quiz-container {
   min-height: calc(100vh - 140px); /* ajuste si ton header est + grand */
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 
 
 
