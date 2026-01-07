@@ -1,14 +1,62 @@
-import { supabase, setupAuthUI } from "./auth-ui.js";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// 1) Initialise l’UI login/logout (si tu l’utilises sur la page)
-const CURRENT_USER = await setupAuthUI();
+const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqYW53ZnhidGd2eGpnb2hsbGl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMzM0MTIsImV4cCI6MjA4MjkwOTQxMn0.3GHwxMSKd1RYagskXzU6QyyVxoJJsfxZV5QeOVmweBk";
 
-// 2) Bloque la page si pas connecté
-if (!CURRENT_USER) {
-  const returnTo = encodeURIComponent("quiz.html");
-  window.location.href = `auth.html?return=${returnTo}`;
-  // On stoppe proprement l’exécution (pas de throw => pas d’écran blanc “cassé”)
-  throw new Error("Redirecting to login"); // optionnel, tu peux aussi faire: export {} et return (mais top-level return interdit)
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const container = document.getElementById("quiz-container");
+
+function showAuthRequired() {
+  // évite “page blanche”
+  if (container) {
+    container.innerHTML = `
+      <div class="card">
+        <h2>Connexion requise</h2>
+        <p>Connecte-toi pour accéder au quiz.</p>
+        <p><a class="btn" href="auth.html?return=quiz.html">Se connecter</a></p>
+      </div>
+    `;
+  }
+}
+
+async function initAuth() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) console.error("getSession error:", error);
+
+  const session = data?.session ?? null;
+
+  // UI boutons
+  const isLoggedIn = !!session;
+  if (loginBtn) loginBtn.hidden = isLoggedIn;
+  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
+
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await supabase.auth.signOut();
+      window.location.href = "auth.html?return=quiz.html";
+    };
+  }
+
+  if (!session) {
+    showAuthRequired();
+    return null;
+  }
+
+  return session.user;
+}
+
+const user = await initAuth();
+if (!user) {
+  // Stopper proprement sans throw => pas d’écran “cassé”
+  // (on laisse la page afficher le message)
+  // IMPORTANT: ne pas exécuter la logique du quiz
+} else {
+  // ICI: seulement si connecté, lance ton code quiz
+  // ex: startQuiz(); ou ton code existant
 }
 
 
@@ -435,6 +483,7 @@ selectedQuestions.forEach((q, i) => {
     });
   });
 });
+
 
 
 
