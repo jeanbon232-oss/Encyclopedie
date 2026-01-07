@@ -21,8 +21,25 @@ const container = document.getElementById("quiz-container");
 ----------------------------- */
 let CURRENT_USER = null;
 
+function setAuthButtons(isLoggedIn) {
+  if (loginBtn) loginBtn.hidden = isLoggedIn;
+  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
+
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      await supabase.auth.signOut();
+      // On force la vue "déconnecté" centrée au retour
+      window.location.href = "quiz.html";
+    };
+  }
+}
+
 function renderAuthRequired() {
   if (!container) return;
+
+  // Active le CSS de centrage UNIQUEMENT dans ce cas
+  document.body.classList.add("needs-auth");
+
   container.innerHTML = `
     <div class="card" style="padding:16px; border-radius:16px;">
       <h2 style="margin-top:0;">Connexion requise</h2>
@@ -32,18 +49,6 @@ function renderAuthRequired() {
       </p>
     </div>
   `;
-}
-
-function setAuthButtons(isLoggedIn) {
-  if (loginBtn) loginBtn.hidden = isLoggedIn;
-  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
-
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
-      await supabase.auth.signOut();
-      window.location.href = "auth.html?return=quiz.html";
-    };
-  }
 }
 
 async function requireAuthOrRender() {
@@ -57,6 +62,9 @@ async function requireAuthOrRender() {
     renderAuthRequired();
     return null;
   }
+
+  // Connecté => on retire la classe de centrage pour retrouver le layout normal du quiz
+  document.body.classList.remove("needs-auth");
   return session.user;
 }
 
@@ -64,26 +72,23 @@ async function requireAuthOrRender() {
    Lancement
 ----------------------------- */
 CURRENT_USER = await requireAuthOrRender();
-if (!CURRENT_USER) {
-  // On s'arrête ici : la page affiche "Connexion requise"
-  // et on n'exécute PAS le quiz.
-} else {
-  startQuiz(CURRENT_USER);
-}
+if (CURRENT_USER) startQuiz(CURRENT_USER);
 
 /* =============================
    QUIZ
 ============================= */
 
 function startQuiz(user) {
-  // Sécurité
   if (!container) return;
 
-  // On nettoie le container (au cas où)
+  // Layout normal quand connecté
+  document.body.classList.remove("needs-auth");
+
+  // Nettoyage
   container.innerHTML = "";
 
   /* -----------------------------
-     Données du quiz (pool complet)
+     Données du quiz
   ----------------------------- */
   const quizData = [
     {
@@ -137,8 +142,7 @@ function startQuiz(user) {
       correct: "La Corne noire",
     },
     {
-      question:
-        "Depuis quel siècle les squelettes de la Bière du DEMON reposent-ils au fond du lac ?",
+      question: "Depuis quel siècle les squelettes de la Bière du DEMON reposent-ils au fond du lac ?",
       options: ["XVIIIᵉ siècle (PCN)", "IVᵉ siècle (ACN)", "XIᵉ siècle (PCN)"],
       correct: "XVIIIᵉ siècle (PCN)",
     },
@@ -188,14 +192,12 @@ function startQuiz(user) {
       correct: "Saison de Dottignies",
     },
     {
-      question:
-        "Strandlover Velskabt Wit : Pourquoi le charpentier trempe-t-il le bois dans une solution chaude ?",
+      question: "Strandlover Velskabt Wit : Pourquoi le charpentier trempe-t-il le bois dans une solution chaude ?",
       options: ["Pour le protéger des parasites", "Pour l’assouplir", "Pour changer sa teinte"],
       correct: "Pour l’assouplir",
     },
   ];
 
-  // Répliques pour les mauvaises réponses (aléatoires)
   const WRONG_REACTIONS = [
     "Non, pas du tout",
     "Ridicule.",
@@ -332,7 +334,10 @@ function startQuiz(user) {
       {
         id: "bon",
         min: 75,
-        msgs: ["Très belle lecture du carnet. Chapeau bas de la part des experts.", "Solide prestation, on sent l’expérience."],
+        msgs: [
+          "Très belle lecture du carnet. Chapeau bas de la part des experts.",
+          "Solide prestation, on sent l’expérience.",
+        ],
       },
       {
         id: "correct",
@@ -346,12 +351,20 @@ function startQuiz(user) {
       {
         id: "moyen",
         min: 40,
-        msgs: ["Moyen. Encore un chapitre du carnet ce soir ?", "Bof mais tu as du potentiel… remets-toi à la lecture.", "On a vu pire, on a vu mieux."],
+        msgs: [
+          "Moyen. Encore un chapitre du carnet ce soir ?",
+          "Bof mais tu as du potentiel… remets-toi à la lecture.",
+          "On a vu pire, on a vu mieux.",
+        ],
       },
       {
         id: "pas-bon",
         min: 25,
-        msgs: ["Pas bon. Remets-toi de suite à la lecture.", "Aïe… Ce score est presque insultant pour les experts.", "On révise d'abord puis on s'y remet."],
+        msgs: [
+          "Pas bon. Remets-toi de suite à la lecture.",
+          "Aïe… Ce score est presque insultant pour les experts.",
+          "On révise d'abord puis on s'y remet.",
+        ],
       },
       {
         id: "nul",
@@ -370,7 +383,6 @@ function startQuiz(user) {
 
     box.setAttribute("data-tier", tier.id);
 
-    // UI: on force la connexion, donc on n'affiche PAS le "hint auth".
     box.innerHTML = `
       <h3>Score final : ${score}/${TOTAL_QUESTIONS} (${pct}%)</h3>
       <p>${note}</p>
@@ -429,7 +441,6 @@ function startQuiz(user) {
     (async () => {
       await refreshLeaderboard();
 
-      // Pré-remplir le pseudo s'il existe déjà
       const existing = await getMyUsername(user.id);
       if (existing) usernameEl.value = existing;
 
@@ -474,7 +485,6 @@ function startQuiz(user) {
 
     const buttons = Array.from(div.querySelectorAll(".option-btn"));
     const result = div.querySelector(".result");
-
     let locked = false;
 
     buttons.forEach((btn) => {
@@ -503,17 +513,4 @@ function startQuiz(user) {
     });
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
