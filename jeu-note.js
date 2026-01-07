@@ -1,7 +1,7 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 /* =========================
-   Supabase (copié de app.js)
+   Supabase
 ========================= */
 const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
 const SUPABASE_ANON_KEY =
@@ -10,13 +10,6 @@ const SUPABASE_ANON_KEY =
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const MAX_ROUNDS = 10;
-
-let beers = [];
-let currentPair = [];
-let currentRound = 1;
-let score = 0;
-let hasAnswered = false;
-let CURRENT_USER = null;
 
 /* =========================
    DOM
@@ -31,8 +24,6 @@ const finalScoreP = document.getElementById("ng-final-score");
 const saveForm = document.getElementById("ng-save-form");
 const nameInput = document.getElementById("ng-name");
 
-// Ajoutés dans ton HTML (si absents, le code reste safe)
-const authHint = document.getElementById("ng-auth-hint");
 const saveMsg = document.getElementById("ng-save-msg");
 const leaderboardHint = document.getElementById("ng-leaderboard-hint");
 
@@ -44,8 +35,25 @@ const logoutBtn = document.getElementById("logoutBtn");
 
 const cards = Array.from(document.querySelectorAll(".note-card"));
 
+// Container principal (pour afficher la carte "Connexion requise")
+const mainContainer =
+  document.getElementById("note-game-container") ||
+  document.querySelector("main") ||
+  document.body;
+
 /* =========================
-   Helpers
+   State
+========================= */
+let beers = [];
+let currentPair = [];
+let currentRound = 1;
+let score = 0;
+let hasAnswered = false;
+
+let CURRENT_USER = null;
+
+/* =========================
+   UI helpers
 ========================= */
 function setSaveMsg(txt, isError = false) {
   if (!saveMsg) return;
@@ -57,31 +65,53 @@ function sanitizeUsername(v) {
   return String(v ?? "").trim().slice(0, 20);
 }
 
-/* =========================
-   Auth UI (login/logout)
-========================= */
-function applyAuthUI(user) {
-  if (loginBtn) loginBtn.hidden = !!user;
-  if (logoutBtn) logoutBtn.hidden = !user;
+function setAuthButtons(isLoggedIn) {
+  if (loginBtn) loginBtn.hidden = isLoggedIn;
+  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
 
   if (logoutBtn) {
     logoutBtn.onclick = async (e) => {
       e.preventDefault();
       await supabase.auth.signOut();
-      window.location.reload();
+      // On revient sur la page (elle affichera "Connexion requise")
+      window.location.href = "jeu-note.html";
     };
   }
 }
 
-async function initAuth() {
-  const { data, error } = await supabase.auth.getSession();
-  CURRENT_USER = error ? null : (data?.session?.user ?? null);
-  applyAuthUI(CURRENT_USER);
+function renderAuthRequired() {
+  document.body.classList.add("needs-auth");
 
-  supabase.auth.onAuthStateChange((_event, session) => {
-    CURRENT_USER = session?.user ?? null;
-    applyAuthUI(CURRENT_USER);
-  });
+  if (!mainContainer) return;
+
+  mainContainer.innerHTML = `
+    <div class="card" style="padding:16px; border-radius:16px;">
+      <h2 style="margin-top:0;">Connexion requise</h2>
+      <p>Connecte-toi pour jouer au jeu de la note et enregistrer ton score.</p>
+      <p style="margin:12px 0 0 0;">
+        <a class="btn" href="auth.html?return=jeu-note.html">Se connecter</a>
+      </p>
+    </div>
+  `;
+}
+
+/* =========================
+   Auth gate (connexion obligatoire)
+========================= */
+async function requireAuthOrRender() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) console.error("getSession error:", error);
+
+  const session = data?.session ?? null;
+  setAuthButtons(!!session);
+
+  if (!session) {
+    renderAuthRequired();
+    return null;
+  }
+
+  document.body.classList.remove("needs-auth");
+  return session.user;
 }
 
 /* =========================
@@ -102,7 +132,6 @@ async function upsertMyUsername(userId, username) {
   const u = sanitizeUsername(username);
   if (!u) return { error: { message: "Pseudo vide." } };
 
-  // Upsert : nécessite UPDATE own et (si row absente) INSERT own sur profiles
   return await supabase
     .from("profiles")
     .upsert({ id: userId, username: u }, { onConflict: "id" });
@@ -112,8 +141,7 @@ async function upsertMyUsername(userId, username) {
    Leaderboard (Supabase)
 ========================= */
 async function loadLeaderboardGlobal() {
-  // 1) scores
-  const { data: scores, error: sErr } = await supabase
+  const { data: scoresRows, error: sErr } = await supabase
     .from("note_game_scores")
     .select("user_id, score, created_at")
     .order("score", { ascending: false })
@@ -125,10 +153,9 @@ async function loadLeaderboardGlobal() {
     return [];
   }
 
-  const rows = scores ?? [];
-  const ids = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+  const rows = scoresRows ?? [];
+  const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
 
-  // 2) usernames
   let profileMap = new Map();
   if (ids.length) {
     const { data: profiles, error: pErr } = await supabase
@@ -139,14 +166,14 @@ async function loadLeaderboardGlobal() {
     if (pErr) {
       console.error("profiles select error:", pErr);
     } else {
-      (profiles ?? []).forEach(p => profileMap.set(p.id, p.username));
+      (profiles ?? []).forEach((p) => profileMap.set(p.id, p.username));
     }
   }
 
-  return rows.map(r => ({
+  return rows.map((r) => ({
     username: profileMap.get(r.user_id) || "Anonyme",
     score: r.score,
-    created_at: r.created_at
+    created_at: r.created_at,
   }));
 }
 
@@ -162,7 +189,6 @@ function renderLeaderboard(entries) {
 
   leaderboardSection.hidden = entries.length === 0;
 
-  // Si tu as laissé un texte "local" dans le HTML, on le corrige
   if (leaderboardHint) {
     leaderboardHint.textContent = "Classement global (tous utilisateurs).";
   }
@@ -174,58 +200,28 @@ async function refreshLeaderboardGlobal() {
 }
 
 /* =========================
-   Endgame UI (connecté / pas connecté)
-========================= */
-async function initEndgameAuthUI() {
-  setSaveMsg("");
-
-  if (!saveForm) return;
-
-  if (!CURRENT_USER) {
-    saveForm.hidden = true;
-    if (authHint) authHint.hidden = false;
-    return;
-  }
-
-  if (authHint) authHint.hidden = true;
-  saveForm.hidden = false;
-
-  const existing = await getMyUsername(CURRENT_USER.id);
-  if (existing && nameInput) nameInput.value = existing;
-}
-
-/* =========================
-   Game logic (inchangé)
+   Game logic
 ========================= */
 async function loadBeers() {
   try {
     const res = await fetch("beers.json");
     beers = await res.json();
-    beers = beers.filter(b => typeof b.rating === "number");
-    startGame();
+    beers = beers.filter((b) => typeof b.rating === "number");
   } catch (e) {
-    feedbackP.textContent = "Impossible de charger les bières.";
     console.error(e);
+    if (feedbackP) feedbackP.textContent = "Impossible de charger les bières.";
+    beers = [];
   }
 }
 
-function startGame() {
-  currentRound = 1;
-  score = 0;
-  updateStatus();
-  showNewPair();
-  // leaderboard global dès le début (optionnel, mais utile)
-  refreshLeaderboardGlobal();
-}
-
 function updateStatus() {
-  roundSpan.textContent = `Manche ${currentRound}/${MAX_ROUNDS}`;
-  scoreSpan.textContent = `Score : ${score}`;
+  if (roundSpan) roundSpan.textContent = `Manche ${currentRound}/${MAX_ROUNDS}`;
+  if (scoreSpan) scoreSpan.textContent = `Score : ${score}`;
 }
 
 function pickRandomPair() {
   if (beers.length < 2) return null;
-  let i = Math.floor(Math.random() * beers.length);
+  const i = Math.floor(Math.random() * beers.length);
   let j;
   do {
     j = Math.floor(Math.random() * beers.length);
@@ -236,8 +232,9 @@ function pickRandomPair() {
 function renderPair(pair) {
   currentPair = pair;
   hasAnswered = false;
-  feedbackP.textContent = "";
-  nextBtn.disabled = true;
+
+  if (feedbackP) feedbackP.textContent = "";
+  if (nextBtn) nextBtn.disabled = true;
 
   cards.forEach((card, idx) => {
     const beer = pair[idx];
@@ -248,17 +245,19 @@ function renderPair(pair) {
     const styleEl = card.querySelector(".note-style");
     const ratingEl = card.querySelector(".note-rating");
 
-    nameEl.textContent = beer.name;
-    styleEl.textContent = beer.style || "";
-    ratingEl.textContent = `Note : ${beer.rating.toFixed(2)}/20`;
-    ratingEl.classList.add("hidden");
+    if (nameEl) nameEl.textContent = beer.name;
+    if (styleEl) styleEl.textContent = beer.style || "";
+    if (ratingEl) {
+      ratingEl.textContent = `Note : ${beer.rating.toFixed(2)}/20`;
+      ratingEl.classList.add("hidden");
+    }
   });
 }
 
 function showNewPair() {
   const pair = pickRandomPair();
   if (!pair) {
-    feedbackP.textContent = "Pas assez de bières pour jouer.";
+    if (feedbackP) feedbackP.textContent = "Pas assez de bières pour jouer.";
     return;
   }
   renderPair(pair);
@@ -272,12 +271,12 @@ function handleChoice(idx) {
   const chosen = idx === 0 ? beerA : beerB;
 
   const correctBeer =
-    beerA.rating === beerB.rating ? null : (beerA.rating > beerB.rating ? beerA : beerB);
+    beerA.rating === beerB.rating ? null : beerA.rating > beerB.rating ? beerA : beerB;
 
   cards.forEach((_card, i) => {
     const card = cards[i];
     const ratingEl = card.querySelector(".note-rating");
-    ratingEl.classList.remove("hidden");
+    if (ratingEl) ratingEl.classList.remove("hidden");
 
     card.disabled = true;
 
@@ -287,17 +286,25 @@ function handleChoice(idx) {
     }
   });
 
+  if (!feedbackP) return;
+
   if (!correctBeer) {
-    feedbackP.textContent = `Égalité parfaite : ${beerA.rating.toFixed(2)} = ${beerB.rating.toFixed(2)}. Manche neutre.`;
+    feedbackP.textContent = `Égalité parfaite : ${beerA.rating.toFixed(2)} = ${beerB.rating.toFixed(
+      2
+    )}. Manche neutre.`;
   } else if (chosen.name === correctBeer.name) {
     score++;
-    feedbackP.textContent = `Bonne réponse ! ${correctBeer.name} a la note la plus élevée (${correctBeer.rating.toFixed(2)}/20).`;
+    feedbackP.textContent = `Bonne réponse ! ${correctBeer.name} a la note la plus élevée (${correctBeer.rating.toFixed(
+      2
+    )}/20).`;
   } else {
-    feedbackP.textContent = `Raté ! ${correctBeer.name} a la note la plus élevée (${correctBeer.rating.toFixed(2)}/20).`;
+    feedbackP.textContent = `Raté ! ${correctBeer.name} a la note la plus élevée (${correctBeer.rating.toFixed(
+      2
+    )}/20).`;
   }
 
   updateStatus();
-  nextBtn.disabled = false;
+  if (nextBtn) nextBtn.disabled = false;
 }
 
 function nextRound() {
@@ -311,10 +318,15 @@ function nextRound() {
 }
 
 async function endGame() {
-  finalScoreP.textContent = `Tu termines avec un score de ${score}/${MAX_ROUNDS}.`;
-  endSection.hidden = false;
+  if (finalScoreP) finalScoreP.textContent = `Tu termines avec un score de ${score}/${MAX_ROUNDS}.`;
+  if (endSection) endSection.hidden = false;
 
-  await initEndgameAuthUI();
+  // Pré-remplir pseudo si déjà existant
+  if (CURRENT_USER?.id && nameInput) {
+    const existing = await getMyUsername(CURRENT_USER.id);
+    if (existing) nameInput.value = existing;
+  }
+
   await refreshLeaderboardGlobal();
 }
 
@@ -342,15 +354,37 @@ async function saveScoreToSupabase() {
 }
 
 /* =========================
-   listeners
+   Wire + start (uniquement connecté)
+========================= */
+function startNoteGame(user) {
+  CURRENT_USER = user;
+
+  // Normalise l’état UI
+  document.body.classList.remove("needs-auth");
+  setAuthButtons(true);
+
+  // Reset game
+  currentRound = 1;
+  score = 0;
+  updateStatus();
+
+  if (endSection) endSection.hidden = true;
+  setSaveMsg("");
+
+  showNewPair();
+  refreshLeaderboardGlobal();
+}
+
+/* =========================
+   listeners (posés une fois)
 ========================= */
 cards.forEach((card, idx) => {
   card.addEventListener("click", () => handleChoice(idx));
 });
 
-nextBtn.addEventListener("click", () => {
-  nextRound();
-});
+if (nextBtn) {
+  nextBtn.addEventListener("click", () => nextRound());
+}
 
 if (saveForm) {
   saveForm.addEventListener("submit", async (e) => {
@@ -371,8 +405,11 @@ if (saveForm) {
 }
 
 /* =========================
-   go !
+   GO
 ========================= */
-await initAuth();
-loadBeers();
+const user = await requireAuthOrRender();
+if (user) {
+  await loadBeers();
+  startNoteGame(user);
+}
 
