@@ -1,112 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-/* =========================
-   Supabase
-========================= */
-const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqYW53ZnhidGd2eGpnb2hsbGl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMzM0MTIsImV4cCI6MjA4MjkwOTQxMn0.3GHwxMSKd1RYagskXzU6QyyVxoJJsfxZV5QeOVmweBk";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 /* =========================
    State
 ========================= */
-let CURRENT_USER = null;
 let CURRENT_BEER_ID = null;
 let ALL_BEERS = [];
 let LAST_SHOWN = [];
-
-/* =========================
-   Auth UI + Change username
-========================= */
-function cleanUsername(raw) {
-  const u = String(raw ?? "").trim();
-  if (u.length < 3) return null;
-  if (u.length > 20) return null;
-  if (!/^[a-zA-Z0-9._\- ]+$/.test(u)) return null;
-  return u;
-}
-
-async function upsertProfileUsername(userId, username) {
-  return await supabase
-    .from("profiles")
-    .upsert({ id: userId, username }, { onConflict: "id" });
-}
-
-async function handleChangeUsername(user) {
-  const input = window.prompt("Nouveau pseudo (3–20 caractères) :");
-  if (input === null) return; // annulé
-
-  const username = cleanUsername(input);
-  if (!username) {
-    window.alert("Pseudo invalide (3–20 caractères, lettres/chiffres/._- et espaces).");
-    return;
-  }
-
-  const { error } = await upsertProfileUsername(user.id, username);
-  if (error) {
-    console.error("upsertProfileUsername error:", error);
-    window.alert("Impossible de changer le pseudo (RLS / droits ?).");
-    return;
-  }
-
-  window.alert("Pseudo mis à jour.");
-}
-
-function applyAuthUI(user) {
-  const loginBtn = document.getElementById("loginBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const changeUsernameBtn = document.getElementById("changeUsernameBtn");
-
-  const isLoggedIn = !!user;
-
-  if (loginBtn) loginBtn.hidden = isLoggedIn;
-  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
-  if (changeUsernameBtn) changeUsernameBtn.hidden = !isLoggedIn;
-
-  if (logoutBtn) {
-    logoutBtn.onclick = async (e) => {
-      e.preventDefault?.();
-      await supabase.auth.signOut();
-      window.location.reload();
-    };
-  }
-
-  if (changeUsernameBtn) {
-    changeUsernameBtn.onclick = async (e) => {
-      e.preventDefault?.();
-      if (!CURRENT_USER) return;
-      await handleChangeUsername(CURRENT_USER);
-    };
-  }
-}
-
-async function setupAuthUI() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error("getSession error:", error);
-    CURRENT_USER = null;
-    applyAuthUI(null);
-    return null;
-  }
-
-  CURRENT_USER = data?.session?.user ?? null;
-  applyAuthUI(CURRENT_USER);
-  return CURRENT_USER;
-}
-
-// Sync auth state in real time
-supabase.auth.onAuthStateChange((_event, session) => {
-  CURRENT_USER = session?.user ?? null;
-  applyAuthUI(CURRENT_USER);
-
-  // Si la modale est ouverte, on rafraîchit l'état du formulaire commentaire
-  const modal = document.getElementById("beer-modal");
-  if (modal && !modal.hidden && CURRENT_BEER_ID) {
-    setupCommentUIForBeer(CURRENT_BEER_ID);
-  }
-});
 
 /* =========================
    Beers list
@@ -281,122 +178,6 @@ function setupListControls() {
 }
 
 /* =========================
-   Comments (modal)
-========================= */
-function formatDate(iso) {
-  try {
-    return new Date(iso).toLocaleString("fr-BE", {
-      dateStyle: "short",
-      timeStyle: "short",
-    });
-  } catch {
-    return "";
-  }
-}
-
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-async function loadComments(beerId) {
-  const { data, error } = await supabase
-    .from("comments")
-    .select("id, content, created_at, profiles(username)")
-    .eq("beer_id", beerId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("loadComments error:", error);
-    return [];
-  }
-  return data ?? [];
-}
-
-function setCommentMsg(text, isError = false) {
-  const el = document.getElementById("commentMsg");
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = isError ? "#b00000" : "";
-}
-
-async function renderComments(beerId) {
-  const listEl = document.getElementById("commentsList");
-  if (!listEl) return;
-
-  listEl.innerHTML = `<div style="opacity:.7;">Chargement…</div>`;
-  const comments = await loadComments(beerId);
-
-  if (!comments.length) {
-    listEl.innerHTML = `<div style="opacity:.7;">Aucun commentaire pour le moment.</div>`;
-    return;
-  }
-
-  listEl.innerHTML = "";
-  for (const c of comments) {
-    const item = document.createElement("div");
-    item.className = "comments__item";
-
-    const author = c.profiles?.username ?? "Anonyme";
-
-    item.innerHTML = `
-      <div><strong>${escapeHtml(author)}</strong></div>
-      <div>${escapeHtml(c.content)}</div>
-      <div class="comments__meta">${formatDate(c.created_at)}</div>
-    `;
-    listEl.appendChild(item);
-  }
-}
-
-async function postComment(beerId, content) {
-  const { error } = await supabase.from("comments").insert({
-    beer_id: beerId,
-    content,
-  });
-  return error;
-}
-
-function setupCommentUIForBeer(beerId) {
-  const form = document.getElementById("commentForm");
-  const hint = document.getElementById("commentAuthHint");
-  const textarea = document.getElementById("commentContent");
-
-  if (!form || !hint) return;
-
-  const isLoggedIn = !!CURRENT_USER;
-  form.hidden = !isLoggedIn;
-  hint.hidden = isLoggedIn;
-
-  setCommentMsg("");
-  if (textarea) textarea.value = "";
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    if (!CURRENT_USER) return;
-
-    const content = (textarea?.value ?? "").trim();
-    if (!content) return;
-
-    setCommentMsg("Publication…");
-    const err = await postComment(beerId, content);
-
-    if (err) {
-      console.error("postComment error:", err);
-      setCommentMsg("Impossible de publier (es-tu bien connecté ?).", true);
-      return;
-    }
-
-    if (textarea) textarea.value = "";
-    setCommentMsg("Publié.");
-    await renderComments(beerId);
-  };
-}
-
-/* =========================
    Beer modal
 ========================= */
 function slugify(name) {
@@ -467,9 +248,6 @@ function openBeerModal(beer) {
   const beerId = (beer.name || "unknown").trim();
   CURRENT_BEER_ID = beerId;
 
-  renderComments(beerId);
-  setupCommentUIForBeer(beerId);
-
   function closeModal() {
     modal.hidden = true;
     document.body.classList.remove("modal-open");
@@ -502,8 +280,6 @@ function openBeerModal(beer) {
 ========================= */
 (async function main() {
   try {
-    await setupAuthUI();
-
     ALL_BEERS = await loadBeers();
     setupListControls();
   } catch (err) {

@@ -1,95 +1,16 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+/* ============================= */
+/* QUIZ - Accès libre          */
+/* ============================= */
 
-/* -----------------------------
-   Supabase setup
------------------------------ */
-const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm53ZnhidGd2eGpnb2hsbGl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMzM0MTIsImV4cCI6MjA4MjkwOTQxMn0.3GHwxMSKd1RYagskXzU6QyyVxoJJsfxZV5QeOVmweBk";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* -----------------------------
-   DOM
------------------------------ */
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
 const container = document.getElementById("quiz-container");
 
-/* -----------------------------
-   Auth gate (connexion obligatoire)
------------------------------ */
-let CURRENT_USER = null;
-
-function setAuthButtons(isLoggedIn) {
-  if (loginBtn) loginBtn.hidden = isLoggedIn;
-  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
-
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
-      await supabase.auth.signOut();
-      // On force la vue "déconnecté" centrée au retour
-      window.location.href = "quiz.html";
-    };
-  }
-}
-
-function renderAuthRequired() {
+function startQuiz() {
   if (!container) return;
-
-  // Active le CSS de centrage UNIQUEMENT dans ce cas
-  document.body.classList.add("needs-auth");
-
-  container.innerHTML = `
-    <div class="card" style="padding:16px; border-radius:16px;">
-      <h2 style="margin-top:0;">Connexion requise</h2>
-      <p>Connecte-toi pour accéder au quiz et apparaître dans le classement.</p>
-      <p style="margin:12px 0 0 0;">
-        <a class="btn" href="auth.html?return=quiz.html">Se connecter</a>
-      </p>
-    </div>
-  `;
-}
-
-async function requireAuthOrRender() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) console.error("getSession error:", error);
-
-  const session = data?.session ?? null;
-  setAuthButtons(!!session);
-
-  if (!session) {
-    renderAuthRequired();
-    return null;
-  }
-
-  // Connecté => on retire la classe de centrage pour retrouver le layout normal du quiz
-  document.body.classList.remove("needs-auth");
-  return session.user;
-}
-
-/* -----------------------------
-   Lancement
------------------------------ */
-CURRENT_USER = await requireAuthOrRender();
-if (CURRENT_USER) startQuiz(CURRENT_USER);
-
-/* =============================
-   QUIZ
-============================= */
-
-function startQuiz(user) {
-  if (!container) return;
-
-  // Layout normal quand connecté
-  document.body.classList.remove("needs-auth");
 
   // Nettoyage
   container.innerHTML = "";
 
-  /* -----------------------------
-     Données du quiz
-  ----------------------------- */
+  /* Data du quiz */
   const quizData = [
     {
       question: "Quelle est la meilleure Duvel ?",
@@ -233,74 +154,36 @@ function startQuiz(user) {
   const selectedQuestions = shuffleArray([...quizData]).slice(0, QUESTIONS_PER_RUN);
   const TOTAL_QUESTIONS = selectedQuestions.length;
 
-  /* -----------------------------
-     Supabase helpers (pseudo + scores)
-  ----------------------------- */
+  /* Local storage helpers - pas d'authentification requise */
   function sanitizeUsername(v) {
     return String(v ?? "").trim().slice(0, 20);
   }
 
-  async function getMyUsername(userId) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (error) return null;
-    return data?.username ?? null;
-  }
-
-  async function upsertMyUsername(userId, username) {
-    const u = sanitizeUsername(username);
-    if (!u) return { error: { message: "Pseudo requis." } };
-
-    return await supabase
-      .from("profiles")
-      .upsert({ id: userId, username: u }, { onConflict: "id" });
-  }
-
-  async function insertQuizScore(userId, scoreValue, totalValue) {
-    return await supabase
-      .from("quiz_scores")
-      .insert({ user_id: userId, score: scoreValue, total: totalValue });
-  }
-
-  async function loadQuizLeaderboardTop20() {
-    const { data: scoresRows, error: sErr } = await supabase
-      .from("quiz_scores")
-      .select("user_id, score, total, created_at")
-      .order("score", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(20);
-
-    if (sErr) {
-      console.error("quiz_scores select error:", sErr);
+  function loadLocalLeaderboard() {
+    try {
+      const data = localStorage.getItem("quiz_scores");
+      return data ? JSON.parse(data) : [];
+    } catch {
       return [];
     }
+  }
 
-    const rows = scoresRows ?? [];
-    const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
-
-    let profileMap = new Map();
-    if (ids.length) {
-      const { data: profiles, error: pErr } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .in("id", ids);
-
-      if (pErr) {
-        console.error("profiles select error:", pErr);
-      } else {
-        (profiles ?? []).forEach((p) => profileMap.set(p.id, p.username));
-      }
+  function saveScoreLocally(username, scoreValue, totalValue) {
+    try {
+      const scores = loadLocalLeaderboard();
+      scores.push({
+        username: sanitizeUsername(username),
+        score: scoreValue,
+        total: totalValue,
+        timestamp: Date.now(),
+      });
+      // Garder juste les top 100
+      scores.sort((a, b) => b.score - a.score || b.timestamp - a.timestamp);
+      localStorage.setItem("quiz_scores", JSON.stringify(scores.slice(0, 100)));
+      return true;
+    } catch {
+      return false;
     }
-
-    return rows.map((r) => ({
-      username: profileMap.get(r.user_id) || "Anonyme",
-      score: r.score,
-      total: r.total,
-    }));
   }
 
   /* -----------------------------
@@ -425,7 +308,7 @@ function startQuiz(user) {
 
     function renderLeaderboard(entries) {
       lbListEl.innerHTML = "";
-      entries.forEach((e, i) => {
+      entries.slice(0, 20).forEach((e, i) => {
         const li = document.createElement("li");
         li.textContent = `${i + 1}. ${e.username} — ${e.score}/${e.total}`;
         lbListEl.appendChild(li);
@@ -433,44 +316,35 @@ function startQuiz(user) {
       lbWrapEl.hidden = entries.length === 0;
     }
 
-    async function refreshLeaderboard() {
-      const entries = await loadQuizLeaderboardTop20();
+    function refreshLeaderboard() {
+      const entries = loadLocalLeaderboard();
       renderLeaderboard(entries);
     }
 
-    (async () => {
-      await refreshLeaderboard();
+    // Initialiser le leaderboard
+    refreshLeaderboard();
 
-      const existing = await getMyUsername(user.id);
-      if (existing) usernameEl.value = existing;
+    formEl.addEventListener("submit", (e) => {
+      e.preventDefault();
+      setMsg("");
 
-      formEl.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        setMsg("");
+      const pseudo = sanitizeUsername(usernameEl.value);
+      if (!pseudo) return setMsg("Pseudo requis.", true);
 
-        const pseudo = sanitizeUsername(usernameEl.value);
-        if (!pseudo) return setMsg("Pseudo requis.", true);
+      setMsg("Enregistrement…");
 
-        setMsg("Enregistrement…");
-
-        const { error: uErr } = await upsertMyUsername(user.id, pseudo);
-        if (uErr) return setMsg(uErr.message || "Erreur pseudo.", true);
-
-        const { error: sErr } = await insertQuizScore(user.id, score, TOTAL_QUESTIONS);
-        if (sErr) {
-          console.error("quiz_scores insert error:", sErr);
-          return setMsg(sErr.message || "Erreur enregistrement score.", true);
-        }
-
-        setMsg("Score enregistré.");
-        await refreshLeaderboard();
-      });
-    })();
+      if (saveScoreLocally(pseudo, score, TOTAL_QUESTIONS)) {
+        setMsg("Score enregistré (local).");
+        refreshLeaderboard();
+      } else {
+        setMsg("Erreur enregistrement.", true);
+      }
+    });
   }
 
-  /* -----------------------------
-     Génération des cartes questions
-  ----------------------------- */
+  /* ============================= */
+  /* Générer les cartes questions */
+  /* ============================= */
   selectedQuestions.forEach((q, i) => {
     const div = document.createElement("div");
     div.className = "question-card";
@@ -513,4 +387,7 @@ function startQuiz(user) {
     });
   });
 }
+
+/* Lancer le quiz directement (sans authentification) */
+startQuiz();
 

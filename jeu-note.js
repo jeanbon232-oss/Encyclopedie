@@ -1,14 +1,3 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-/* =========================
-   Supabase
-========================= */
-const SUPABASE_URL = "https://wjanwfxbtgvxjgohlliu.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndqYW53ZnhidGd2eGpnb2hsbGl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMzM0MTIsImV4cCI6MjA4MjkwOTQxMn0.3GHwxMSKd1RYagskXzU6QyyVxoJJsfxZV5QeOVmweBk";
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 const MAX_ROUNDS = 10;
 
 /* =========================
@@ -30,16 +19,7 @@ const leaderboardHint = document.getElementById("ng-leaderboard-hint");
 const leaderboardSection = document.getElementById("ng-leaderboard");
 const leaderboardList = document.getElementById("ng-leaderboard-list");
 
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-
 const cards = Array.from(document.querySelectorAll(".note-card"));
-
-// Container principal (pour afficher la carte "Connexion requise")
-const mainContainer =
-  document.getElementById("note-game-container") ||
-  document.querySelector("main") ||
-  document.body;
 
 /* =========================
    State
@@ -49,8 +29,6 @@ let currentPair = [];
 let currentRound = 1;
 let score = 0;
 let hasAnswered = false;
-
-let CURRENT_USER = null;
 
 /* =========================
    UI helpers
@@ -65,138 +43,31 @@ function sanitizeUsername(v) {
   return String(v ?? "").trim().slice(0, 20);
 }
 
-function setAuthButtons(isLoggedIn) {
-  if (loginBtn) loginBtn.hidden = isLoggedIn;
-  if (logoutBtn) logoutBtn.hidden = !isLoggedIn;
-
-  if (logoutBtn) {
-    logoutBtn.onclick = async (e) => {
-      e.preventDefault();
-      await supabase.auth.signOut();
-      // On revient sur la page (elle affichera "Connexion requise")
-      window.location.href = "jeu-note.html";
-    };
-  }
-}
-
-function renderAuthRequired() {
-  document.body.classList.add("needs-auth");
-
-  if (!mainContainer) return;
-
-  mainContainer.innerHTML = `
-    <div class="card" style="padding:16px; border-radius:16px;">
-      <h2 style="margin-top:0;">Connexion requise</h2>
-      <p>Connecte-toi pour jouer au jeu de la note et enregistrer ton score.</p>
-      <p style="margin:12px 0 0 0;">
-        <a class="btn" href="auth.html?return=jeu-note.html">Se connecter</a>
-      </p>
-    </div>
-  `;
-}
-
-/* =========================
-   Auth gate (connexion obligatoire)
-========================= */
-async function requireAuthOrRender() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) console.error("getSession error:", error);
-
-  const session = data?.session ?? null;
-  setAuthButtons(!!session);
-
-  if (!session) {
-    renderAuthRequired();
-    return null;
-  }
-
-  document.body.classList.remove("needs-auth");
-  return session.user;
-}
-
-/* =========================
-   Profiles (pseudo)
-========================= */
-async function getMyUsername(userId) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("username")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (error) return null;
-  return data?.username ?? null;
-}
-
-async function upsertMyUsername(userId, username) {
-  const u = sanitizeUsername(username);
-  if (!u) return { error: { message: "Pseudo vide." } };
-
-  return await supabase
-    .from("profiles")
-    .upsert({ id: userId, username: u }, { onConflict: "id" });
-}
-
-/* =========================
-   Leaderboard (Supabase)
-========================= */
-async function loadLeaderboardGlobal() {
-  const { data: scoresRows, error: sErr } = await supabase
-    .from("note_game_scores")
-    .select("user_id, score, created_at")
-    .order("score", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (sErr) {
-    console.error("note_game_scores select error:", sErr);
+/* Local storage helpers - pas d'authentification */
+function loadLocalLeaderboard() {
+  try {
+    const data = localStorage.getItem("note_game_scores");
+    return data ? JSON.parse(data) : [];
+  } catch {
     return [];
   }
-
-  const rows = scoresRows ?? [];
-  const ids = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
-
-  let profileMap = new Map();
-  if (ids.length) {
-    const { data: profiles, error: pErr } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .in("id", ids);
-
-    if (pErr) {
-      console.error("profiles select error:", pErr);
-    } else {
-      (profiles ?? []).forEach((p) => profileMap.set(p.id, p.username));
-    }
-  }
-
-  return rows.map((r) => ({
-    username: profileMap.get(r.user_id) || "Anonyme",
-    score: r.score,
-    created_at: r.created_at,
-  }));
 }
 
-function renderLeaderboard(entries) {
-  if (!leaderboardList || !leaderboardSection) return;
-
-  leaderboardList.innerHTML = "";
-  entries.forEach((entry, index) => {
-    const li = document.createElement("li");
-    li.textContent = `${index + 1}. ${entry.username} — ${entry.score}/${MAX_ROUNDS}`;
-    leaderboardList.appendChild(li);
-  });
-
-  leaderboardSection.hidden = entries.length === 0;
-
-  if (leaderboardHint) {
-    leaderboardHint.textContent = "Classement global (tous utilisateurs).";
+function saveScoreLocally(username, scoreValue) {
+  try {
+    const scores = loadLocalLeaderboard();
+    scores.push({
+      username: sanitizeUsername(username),
+      score: scoreValue,
+      timestamp: Date.now(),
+    });
+    // Garder juste les top 100
+    scores.sort((a, b) => b.score - a.score || b.timestamp - a.timestamp);
+    localStorage.setItem("note_game_scores", JSON.stringify(scores.slice(0, 100)));
+    return true;
+  } catch {
+    return false;
   }
-}
-
-async function refreshLeaderboardGlobal() {
-  const entries = await loadLeaderboardGlobal();
-  renderLeaderboard(entries);
 }
 
 /* =========================
@@ -317,52 +188,59 @@ function nextRound() {
   showNewPair();
 }
 
-async function endGame() {
+function renderLeaderboard(entries) {
+  if (!leaderboardList || !leaderboardSection) return;
+
+  leaderboardList.innerHTML = "";
+  entries.slice(0, 20).forEach((entry, index) => {
+    const li = document.createElement("li");
+    li.textContent = `${index + 1}. ${entry.username} — ${entry.score}/${MAX_ROUNDS}`;
+    leaderboardList.appendChild(li);
+  });
+
+  leaderboardSection.hidden = entries.length === 0;
+  if (leaderboardHint) {
+    leaderboardHint.textContent = "Classement (stockage local).";
+  }
+}
+
+function refreshLeaderboard() {
+  const entries = loadLocalLeaderboard();
+  renderLeaderboard(entries);
+}
+
+function endGame() {
   if (finalScoreP) finalScoreP.textContent = `Tu termines avec un score de ${score}/${MAX_ROUNDS}.`;
   if (endSection) endSection.hidden = false;
 
-  // Pré-remplir pseudo si déjà existant
-  if (CURRENT_USER?.id && nameInput) {
-    const existing = await getMyUsername(CURRENT_USER.id);
-    if (existing) nameInput.value = existing;
-  }
-
-  await refreshLeaderboardGlobal();
+  refreshLeaderboard();
 }
 
 /* =========================
-   Save score (Supabase)
+   Save score (localStorage)
 ========================= */
-async function saveScoreToSupabase() {
-  if (!CURRENT_USER) return { error: { message: "Non connecté." } };
-
+function saveScore() {
   const pseudo = sanitizeUsername(nameInput?.value);
-  if (!pseudo) return { error: { message: "Pseudo requis." } };
+  if (!pseudo) {
+    setSaveMsg("Pseudo requis.", true);
+    return;
+  }
 
   setSaveMsg("Enregistrement…");
 
-  const { error: uErr } = await upsertMyUsername(CURRENT_USER.id, pseudo);
-  if (uErr) return { error: uErr };
-
-  const { error: sErr } = await supabase
-    .from("note_game_scores")
-    .insert({ user_id: CURRENT_USER.id, score });
-
-  if (sErr) return { error: sErr };
-
-  return { error: null };
+  if (saveScoreLocally(pseudo, score)) {
+    setSaveMsg("Score enregistré (local).");
+    refreshLeaderboard();
+    if (nameInput) nameInput.value = "";
+  } else {
+    setSaveMsg("Erreur enregistrement.", true);
+  }
 }
 
 /* =========================
    Wire + start (uniquement connecté)
 ========================= */
-function startNoteGame(user) {
-  CURRENT_USER = user;
-
-  // Normalise l’état UI
-  document.body.classList.remove("needs-auth");
-  setAuthButtons(true);
-
+function startNoteGame() {
   // Reset game
   currentRound = 1;
   score = 0;
@@ -372,7 +250,7 @@ function startNoteGame(user) {
   setSaveMsg("");
 
   showNewPair();
-  refreshLeaderboardGlobal();
+  refreshLeaderboard();
 }
 
 /* =========================
@@ -387,29 +265,17 @@ if (nextBtn) {
 }
 
 if (saveForm) {
-  saveForm.addEventListener("submit", async (e) => {
+  saveForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    setSaveMsg("");
-
-    const { error } = await saveScoreToSupabase();
-    if (error) {
-      console.error("save score error:", error);
-      setSaveMsg(error.message || "Impossible d’enregistrer.", true);
-      return;
-    }
-
-    setSaveMsg("Score enregistré.");
-    saveForm.reset();
-    await refreshLeaderboardGlobal();
+    saveScore();
   });
 }
 
 /* =========================
-   GO
+   GO - Démarrer (sans authentification)
 ========================= */
-const user = await requireAuthOrRender();
-if (user) {
+(async () => {
   await loadBeers();
-  startNoteGame(user);
-}
+  startNoteGame();
+})();
 
