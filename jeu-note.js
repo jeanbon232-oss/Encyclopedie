@@ -7,6 +7,7 @@ const roundSpan = document.getElementById("ng-round");
 const scoreSpan = document.getElementById("ng-score");
 const feedbackP = document.getElementById("ng-feedback");
 const nextBtn = document.getElementById("ng-next");
+const equalBtn = document.getElementById("ng-equal");
 const endSection = document.getElementById("ng-end");
 const finalScoreP = document.getElementById("ng-final-score");
 
@@ -106,6 +107,7 @@ function renderPair(pair) {
 
   if (feedbackP) feedbackP.textContent = "";
   if (nextBtn) nextBtn.disabled = true;
+  if (equalBtn) equalBtn.disabled = false;
 
   cards.forEach((card, idx) => {
     const beer = pair[idx];
@@ -137,6 +139,7 @@ function showNewPair() {
 function handleChoice(idx) {
   if (hasAnswered) return;
   hasAnswered = true;
+  if (equalBtn) equalBtn.disabled = true;
 
   const [beerA, beerB] = currentPair;
   const chosen = idx === 0 ? beerA : beerB;
@@ -172,6 +175,34 @@ function handleChoice(idx) {
     feedbackP.textContent = `Raté ! ${correctBeer.name} a la note la plus élevée (${correctBeer.rating.toFixed(
       2
     )}/20).`;
+  }
+
+  updateStatus();
+  if (nextBtn) nextBtn.disabled = false;
+}
+
+function handleEqual() {
+  if (hasAnswered) return;
+  hasAnswered = true;
+  if (equalBtn) equalBtn.disabled = true;
+
+  const [beerA, beerB] = currentPair;
+  const isEqual = beerA.rating === beerB.rating;
+
+  cards.forEach((_card, i) => {
+    const card = cards[i];
+    const ratingEl = card.querySelector(".note-rating");
+    if (ratingEl) ratingEl.classList.remove("hidden");
+    card.disabled = true;
+  });
+
+  if (!feedbackP) return;
+
+  if (isEqual) {
+    score += 5;
+    feedbackP.textContent = `✅ Égalité détectée : +5 points !`;
+  } else {
+    feedbackP.textContent = `❌ Ce n'était pas une égalité.`;
   }
 
   updateStatus();
@@ -262,6 +293,10 @@ cards.forEach((card, idx) => {
 
 if (nextBtn) {
   nextBtn.addEventListener("click", () => nextRound());
+}
+
+if (equalBtn) {
+  equalBtn.addEventListener("click", () => handleEqual());
 }
 
 if (saveForm) {

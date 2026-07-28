@@ -117,6 +117,21 @@ function startQuiz() {
       options: ["Pour le protéger des parasites", "Pour l’assouplir", "Pour changer sa teinte"],
       correct: "Pour l’assouplir",
     },
+    {
+      question: "Brigand (+4) : De quoi est rempli le sac lié à une corde dont la rigidité surprend le brigand ?",
+      options: ["De gravier", "De grain", "De fruits séchés"],
+      correct: "De grain",
+    },
+    {
+      question: "Le couronnement de la Trinité est-il légitime ?",
+      options: ["Oui", "Non", "Il l'était"],
+      correct: "Oui",
+    },
+    {
+      question: "Laquelle n'a aucun lien avec les champignons ?",
+      options: ["Leopold 7", "Bavik", "Bisous M'chou", "Ommegang Triple", "La Frangine"],
+      correct: "La Frangine",
+    },
   ];
 
   const WRONG_REACTIONS = [
@@ -137,6 +152,10 @@ function startQuiz() {
 
   let score = 0;
   let answeredCount = 0;
+  let correctAnswers = 0;
+  let streak = 0;
+  let wrongStreak = 0;
+  const MAX_GAUGE = 100;
 
   /* -----------------------------
      Tirage aléatoire de 10 questions
@@ -151,8 +170,46 @@ function startQuiz() {
     return arr;
   }
 
-  const selectedQuestions = shuffleArray([...quizData]).slice(0, QUESTIONS_PER_RUN);
+  const enrichedQuestions = quizData.map((q, index) => ({
+    ...q,
+    difficulty: q.difficulty ?? (index % 5 === 0 ? "hard" : index % 4 === 0 ? "easy" : "medium"),
+    value: q.value ?? (index % 5 === 0 ? 12 : index % 4 === 0 ? 5 : 8),
+  }));
+
+  const selectedQuestions = shuffleArray([...enrichedQuestions]).slice(0, QUESTIONS_PER_RUN);
   const TOTAL_QUESTIONS = selectedQuestions.length;
+
+  const progressBox = document.createElement("div");
+  progressBox.className = "quiz-progress";
+  progressBox.innerHTML = `
+    <div class="quiz-progress__header">
+      <strong>Jauge : <span id="quiz-gauge-value">0/100</span></strong>
+      <span id="quiz-streak-pill" class="quiz-streak-pill">Streak : 0</span>
+    </div>
+    <div class="quiz-progress-bar">
+      <div id="quiz-progress-fill" class="quiz-progress-fill"></div>
+    </div>
+    <p id="quiz-progress-text" class="quiz-progress-text">
+      Une bonne réponse fait monter la jauge, et un streak plus long augmente encore le gain.
+    </p>
+  `;
+  container.appendChild(progressBox);
+
+  const gaugeValueEl = progressBox.querySelector("#quiz-gauge-value");
+  const streakEl = progressBox.querySelector("#quiz-streak-pill");
+  const fillEl = progressBox.querySelector("#quiz-progress-fill");
+  const progressTextEl = progressBox.querySelector("#quiz-progress-text");
+
+  function updateProgressUI(message = "") {
+    gaugeValueEl.textContent = `${score}/${MAX_GAUGE}`;
+    streakEl.textContent = `Streak : ${streak}`;
+    fillEl.style.width = `${Math.min(MAX_GAUGE, score)}%`;
+    if (message) {
+      progressTextEl.textContent = message;
+    }
+  }
+
+  updateProgressUI();
 
   /* Local storage helpers - pas d'authentification requise */
   function sanitizeUsername(v) {
@@ -195,7 +252,7 @@ function startQuiz() {
     const box = document.createElement("div");
     box.className = "score-box";
 
-    const pct = Math.round((score / TOTAL_QUESTIONS) * 100);
+    const pct = Math.round((score / MAX_GAUGE) * 100);
 
     const TIERS = [
       {
@@ -267,8 +324,9 @@ function startQuiz() {
     box.setAttribute("data-tier", tier.id);
 
     box.innerHTML = `
-      <h3>Score final : ${score}/${TOTAL_QUESTIONS} (${pct}%)</h3>
+      <h3>Jauge finale : ${score}/${MAX_GAUGE} (${pct}%)</h3>
       <p>${note}</p>
+      <p class="quiz-summary">Réponses justes : ${correctAnswers}/${TOTAL_QUESTIONS}</p>
 
       <form id="quiz-save-form" style="display:grid; gap:10px; margin-top:12px;">
         <label>
@@ -333,7 +391,7 @@ function startQuiz() {
 
       setMsg("Enregistrement…");
 
-      if (saveScoreLocally(pseudo, score, TOTAL_QUESTIONS)) {
+      if (saveScoreLocally(pseudo, score, MAX_GAUGE)) {
         setMsg("Score enregistré (local).");
         refreshLeaderboard();
       } else {
@@ -370,15 +428,29 @@ function startQuiz() {
 
         const chosen = btn.textContent.trim();
         if (chosen === q.correct) {
-          score++;
+          const gain = Math.min(MAX_GAUGE - score, Math.max(10, (q.value ?? 8) + streak * 5));
+          score = Math.min(MAX_GAUGE, score + gain);
+          streak += 1;
+          wrongStreak = 0;
+          correctAnswers += 1;
           btn.classList.add("is-correct");
-          result.textContent = "✅ Bonne réponse !";
+          result.textContent = `✅ Bonne réponse ! +${gain} sur la jauge`;
           result.classList.add("ok");
+          updateProgressUI(`Streak x${streak} : la bonne réponse a fait monter la jauge de ${gain}.`);
         } else {
+          const penalty = wrongStreak === 0 ? 5 : wrongStreak === 1 ? 7 : 10;
+          score = Math.max(0, score - penalty);
+          wrongStreak += 1;
+          streak = 0;
           btn.classList.add("is-wrong");
           const msg = WRONG_REACTIONS[Math.floor(Math.random() * WRONG_REACTIONS.length)];
           result.textContent = `❌ ${msg}`;
           result.classList.add("ko");
+          updateProgressUI(
+            wrongStreak === 1
+              ? `Raté : la jauge perd ${penalty} points.`
+              : `Raté : la jauge perd ${penalty} points (${wrongStreak}e mauvaise d'affilée).`
+          );
         }
 
         answeredCount++;
